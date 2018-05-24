@@ -1,0 +1,23 @@
+= Cheatsheets
+
+[[Entry]]
+== Entry
+
+++++
+ <p>
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[deploymentID]]`deploymentID`|`String`|-
+|[[deploymentOptions]]`deploymentOptions`|`link:dataobjects.html#DeploymentOptions[DeploymentOptions]`|-
+|[[entryClass]]`entryClass`|`String`|-
+|[[priority]]`priority`|`Number (int)`|-
+|[[script]]`script`|`Boolean`|-
+|[[state]]`state`|`link:enums.html#STATE[STATE]`|-
+|===
+

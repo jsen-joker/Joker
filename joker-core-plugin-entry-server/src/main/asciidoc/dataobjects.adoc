@@ -1,0 +1,23 @@
+= Cheatsheets
+
+[[VertxProjectServer]]
+== VertxProjectServer
+
+++++
+ <p>
+ 
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[artifactId]]`artifactId`|`String`|-
+|[[data]]`data`|`String`|-
+|[[groupId]]`groupId`|`String`|-
+|[[uuid]]`uuid`|`String`|-
+|[[version]]`version`|`String`|-
+|===
+

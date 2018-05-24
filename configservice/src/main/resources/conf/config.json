@@ -1,0 +1,36 @@
+{
+  "service1" : {
+    "http.port" : 9010,
+    "endpoint" : "/service001",
+    "app.name" : "service001"
+  },
+  "service2" : {
+    "http.port" : 9011,
+    "endpoint" : "/service002",
+    "app.name" : "service002"
+  },
+  "user" : {
+    "http.port" : 9012,
+    "endpoint" : "/user",
+    "app.name" : "user"
+  },
+  "job" : {
+    "http.port" : 9013,
+    "endpoint" : "/job",
+    "app.name" : "job001"
+  },
+  "project_server" : {
+    "http.port" : 9014,
+    "endpoint" : "/project/server",
+    "app.name" : "project-server"
+  },
+  "s_gateway" : {
+    "http.port" : 8088
+  },
+  "mysql1" : {
+    "url" : "jdbc:mysql://localhost/jtest002?characterEncoding=UTF-8&useSSL=false",
+    "driver_class" : "com.mysql.cj.jdbc.Driver",
+    "user" : "root",
+    "password" : ""
+  }
+}
