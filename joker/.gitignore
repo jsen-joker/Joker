@@ -1,0 +1,8 @@
+
+.DS_Store
+.vertx
+
+
+logs/joker.log
+
+!lib/
