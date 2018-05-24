@@ -6,3 +6,5 @@
 logs/joker.log
 
 !lib/
+
+static/*
