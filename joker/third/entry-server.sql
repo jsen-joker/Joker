@@ -21,3 +21,4 @@ CREATE TABLE `vertx_project_server` (
 # hsqldb
 DROP TABLE IF EXISTS vertx_project_server
 CREATE TABLE vertx_project_server (version varchar(64),artifact_id varchar(128),group_id varchar(128),data LONGVARCHAR,uuid varchar(128),upload_time datetime,name varchar(128),enter varchar(128))
+CREATE TABLE IF NOT EXISTS vertx_project_server (version varchar(64),artifact_id varchar(128),group_id varchar(128),data LONGVARCHAR,uuid varchar(128),upload_time datetime,name varchar(128),enter varchar(128))

@@ -86,6 +86,11 @@
             <artifactId>vertx-web-client</artifactId>
             <version>${vertx-version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-redis-client</artifactId>
+            <version>${vertx-version}</version>
+        </dependency>
 
         <dependency>
             <groupId>mysql</groupId>
@@ -105,8 +110,8 @@
             <version>3.2.0</version>
         </dependency>
         <dependency>
-            <groupId>org.exec-scheduler</groupId>
-            <artifactId>exec</artifactId>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz</artifactId>
             <version>2.3.0</version>
         </dependency>
         <dependency>
@@ -160,6 +165,12 @@
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
             <version>2.4.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>2.5.0-rc-2</version>
         </dependency>
     </dependencies>
  

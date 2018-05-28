@@ -28,9 +28,6 @@
         <module>joker-core-plugin-manager</module>
         <module>joker-core-plugin-entry-server</module>
         <module>joker-core-plugin-manager-master</module>
-        <module>testcl001</module>
-        <module>testcl002</module>
-        <module>testcl003</module>
     </modules>
 
     <properties>
