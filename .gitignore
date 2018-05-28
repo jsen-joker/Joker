@@ -5,9 +5,8 @@ boot.sh
 file-uploads/
 jobservice/
 pojo/
-test-redis-job-worker/
+test*
 testmysql/
-testredisjob/
 testservice1/
 testservice2/
 lib/
