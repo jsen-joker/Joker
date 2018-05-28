@@ -110,7 +110,10 @@ joker 静态资源目录
 
 五、添加pom中vertx-boot-class支持 priority属性来设置启动顺序，默认为1，同一个priority下的entry会在一个组中加载。
 
-
+### version 0.0.3_02-SNAPSHOT
+一、修改classloader加载策略，每一个文件、jar包加载一个自己的classloader，他们属于平行关系，他们属于同一个父classloader，修改了该父classloader的加载策略，loadclass时首先检查所有子类。
+二、实现更细粒度的entry部署控制，由于新的classlaoder实现，我们可以在卸载的时候只卸载删除了的文件的verticle，不用全部卸载，再更新。
+三、一些插件：基于redis的任务调度，将原来基于config文件的文件配置服务器改为使用hsqldb数据库进行配置，默认9000端口，支持在线修改，支持json格式配置。
 
 ## deploy
 
