@@ -17,6 +17,7 @@ public class Entry implements Comparable<Entry> {
     /**
      * vertx部署分配的ID
      */
+    private String filePath;
     private String deploymentID;
     private String entryClass;
     private DeploymentOptions deploymentOptions;
@@ -29,8 +30,9 @@ public class Entry implements Comparable<Entry> {
 
     private int priority;
 
-    public Entry(String entryClass, DeploymentOptions deploymentOptions, EntryManager.STATE state,
+    public Entry(String filePath, String entryClass, DeploymentOptions deploymentOptions, EntryManager.STATE state,
                  String groupID, String artifactId, String version, String fileName, boolean isScript, int priority) {
+        this.filePath = filePath;
         this.entryClass = entryClass;
         this.deploymentOptions = deploymentOptions;
         this.state = state;
@@ -84,6 +86,10 @@ public class Entry implements Comparable<Entry> {
     public Entry setDeploymentID(String deploymentID) {
         this.deploymentID = deploymentID;
         return this;
+    }
+
+    public String getFilePath() {
+        return filePath;
     }
 
     public boolean isScript() {

@@ -1,0 +1,23 @@
+= Cheatsheets
+
+[[JobConf]]
+== JobConf
+
+++++
+ <p>
+     一个Job任务的 全部配置信息
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[cron]]`cron`|`String`|-
+|[[index]]`index`|`Number (Long)`|-
+|[[jobData]]`jobData`|`String`|-
+|[[staticJob]]`staticJob`|`Boolean`|-
+|[[taskID]]`taskID`|`String`|-
+|===
+

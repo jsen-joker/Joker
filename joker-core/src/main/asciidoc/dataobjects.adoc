@@ -16,6 +16,7 @@
 |[[deploymentID]]`deploymentID`|`String`|-
 |[[deploymentOptions]]`deploymentOptions`|`link:dataobjects.html#DeploymentOptions[DeploymentOptions]`|-
 |[[entryClass]]`entryClass`|`String`|-
+|[[filePath]]`filePath`|`String`|-
 |[[priority]]`priority`|`Number (int)`|-
 |[[script]]`script`|`Boolean`|-
 |[[state]]`state`|`link:enums.html#STATE[STATE]`|-

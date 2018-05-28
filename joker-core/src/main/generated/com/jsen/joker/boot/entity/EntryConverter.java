@@ -45,6 +45,9 @@ public class EntryConverter {
     if (obj.getEntryClass() != null) {
       json.put("entryClass", obj.getEntryClass());
     }
+    if (obj.getFilePath() != null) {
+      json.put("filePath", obj.getFilePath());
+    }
     json.put("priority", obj.getPriority());
     json.put("script", obj.isScript());
     if (obj.getState() != null) {

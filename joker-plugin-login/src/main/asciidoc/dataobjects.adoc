@@ -1,0 +1,119 @@
+= Cheatsheets
+
+[[SysPermission]]
+== SysPermission
+
+++++
+ <p>
+ 
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[comment]]`comment`|`String`|-
+|[[id]]`id`|`Number (Integer)`|-
+|[[order]]`order`|`Number (Integer)`|-
+|[[permission]]`permission`|`String`|-
+|[[type]]`type`|`Number (Integer)`|-
+|===
+
+[[SysRole]]
+== SysRole
+
+++++
+ <p>
+ 
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[id]]`id`|`Number (Integer)`|-
+|[[state]]`state`|`Number (Integer)`|-
+|[[value]]`value`|`String`|-
+|===
+
+[[SysRoleAuthority]]
+== SysRoleAuthority
+
+++++
+ <p>
+ 
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[authorityId]]`authorityId`|`Number (Integer)`|-
+|[[id]]`id`|`Number (Integer)`|-
+|[[roleId]]`roleId`|`Number (Integer)`|-
+|===
+
+[[SysRolePermission]]
+== SysRolePermission
+
+++++
+ <p>
+ 
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[id]]`id`|`Number (Integer)`|-
+|[[permissionId]]`permissionId`|`Number (Integer)`|-
+|[[roleId]]`roleId`|`Number (Integer)`|-
+|===
+
+[[SysUser]]
+== SysUser
+
+++++
+ <p>
+ 
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[id]]`id`|`Number (Integer)`|-
+|[[name]]`name`|`String`|-
+|[[password]]`password`|`String`|-
+|[[sex]]`sex`|`Number (Integer)`|-
+|===
+
+[[SysUserRole]]
+== SysUserRole
+
+++++
+ <p>
+ 
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[id]]`id`|`Number (Integer)`|-
+|[[roleId]]`roleId`|`Number (Integer)`|-
+|[[userId]]`userId`|`Number (Integer)`|-
+|===
+

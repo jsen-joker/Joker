@@ -69,4 +69,8 @@ public class ConfigRetrieverHelper {
         options.addStore(httpStore);
         return this;
     }
+
+    public void close() {
+        configRetriever.close();
+    }
 }

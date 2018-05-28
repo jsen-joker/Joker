@@ -15,7 +15,7 @@ Class-Path: netty-handler-4.1.19.Final.jar jackson-databind-2.9.3.jar
  ocks-4.1.19.Final.jar vertx-auth-jwt-3.5.1.jar jackson-annotations-2.
  9.0.jar vertx-core-3.5.1.jar netty-codec-http2-4.1.19.Final.jar vertx
  -circuit-breaker-3.5.1.jar commons-codec-1.10.jar vertx-rx-java-3.5.1
- .jar vertx-jdbc-client-3.5.1.jar vertx-hazelcast-3.5.1.jar quartz-2.3
+ .jar vertx-jdbc-client-3.5.1.jar vertx-hazelcast-3.5.1.jar exec-2.3
  .0.jar HikariCP-java6-2.3.13.jar rxjava-1.3.5.jar vertx-codegen-3.5.1
  .jar HdrHistogram-2.1.9.jar netty-codec-4.1.19.Final.jar vertx-bridge
  -common-3.5.1.jar hazelcast-3.8.2.jar logback-classic-1.2.3.jar bcpro

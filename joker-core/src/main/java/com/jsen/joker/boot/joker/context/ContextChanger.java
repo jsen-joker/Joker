@@ -1,7 +1,7 @@
 package com.jsen.joker.boot.joker.context;
 
 import com.jsen.joker.boot.RootVerticle;
-import com.jsen.joker.boot.cloader.context.EnterContext;
+import com.jsen.joker.boot.cloader.context.EntryContext;
 import com.jsen.joker.boot.utils.FileSystemDetector;
 import com.jsen.joker.boot.utils.JarResourceUncompress;
 import com.jsen.joker.boot.utils.Regex;
@@ -36,7 +36,7 @@ public class ContextChanger implements FileSystemDetector.OnFileChangeListener {
     }
 
     @Override
-    public void change(List<FileSystemDetector.FileEntry> current, List<FileSystemDetector.FileEntry> add, List<FileSystemDetector.FileEntry> del) {
+    public void change(List<FileSystemDetector.FileEntry> add, List<FileSystemDetector.FileEntry> del) {
         if (!lock.tryLock()) {
             logger.debug("joker loop locked return");
             return;
@@ -45,7 +45,7 @@ public class ContextChanger implements FileSystemDetector.OnFileChangeListener {
 
         if (del.isEmpty()) {
             extractJarResource(add);
-            EnterContext.getDefaultEnterContext().addJars(add.stream().map(fE -> fE.file).collect(Collectors.toList()));
+            EntryContext.getDefaultEnterContext().addJars(add);
             List<Entry> addEntries = add.stream().map(Entry::new).collect(Collectors.toList());
             RootVerticle.getDefaultRootVerticle().loadEntries(addEntries).setHandler(ar -> lock.unlock());
         } else {
@@ -63,9 +63,10 @@ public class ContextChanger implements FileSystemDetector.OnFileChangeListener {
             });
             extractJarResource(add);
             // reload
-            RootVerticle.getDefaultRootVerticle().clearAllEntry().setHandler(ar0 -> {
-                EnterContext.getDefaultEnterContext().reloadJars(current.stream().map(fE -> fE.file).collect(Collectors.toList()));
-                RootVerticle.getDefaultRootVerticle().loadEntries(current.stream().map(Entry::new).collect(Collectors.toList())).setHandler(ar -> lock.unlock());
+            RootVerticle.getDefaultRootVerticle().clearEntries(del.stream().map(item -> item.file.getAbsolutePath()).collect(Collectors.toList())).setHandler(ar0 -> {
+                EntryContext.getDefaultEnterContext().delJars(del);
+                EntryContext.getDefaultEnterContext().addJars(add);
+                RootVerticle.getDefaultRootVerticle().loadEntries(add.stream().map(Entry::new).collect(Collectors.toList())).setHandler(ar -> lock.unlock());
             });
         }
     }

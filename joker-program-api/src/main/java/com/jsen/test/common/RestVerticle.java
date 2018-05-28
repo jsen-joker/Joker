@@ -163,7 +163,7 @@ public abstract class RestVerticle extends VerticleBase {
         allowMethods.add(HttpMethod.PUT);
 
         route.handler(CorsHandler.create("*")
-                .allowedHeaders(allowHeaders));
+                .allowedHeaders(allowHeaders).allowedMethods(allowMethods));
     }
 
 }

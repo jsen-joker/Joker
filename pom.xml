@@ -9,25 +9,28 @@
     <packaging>pom</packaging>
     <version>1.0.3-SNAPSHOT</version>
     <modules>
-        <module>testgateway</module>
         <module>testmysql</module>
         <module>testservice1</module>
         <module>testservice2</module>
-        <module>account</module>
         <module>pojo</module>
-        <module>configservice</module>
         <module>jobservice</module>
         <module>stplugin</module>
-        <module>testredisjob</module>
 
-        <module>test-redis-job-worker</module>
+        <module>joker-plugin-job-master</module>
+        <module>joker-plugin-job-worker</module>
+        <module>joker-plugin-gateway</module>
+        <module>joker-plugin-login</module>
+        <module>joker-plugin-config</module>
 
         <module>joker-core</module>
         <module>joker-boot</module>
         <module>joker-program-api</module>
         <module>joker-core-plugin-manager</module>
         <module>joker-core-plugin-entry-server</module>
-        <module>jokercorepluginmanagermaster</module>
+        <module>joker-core-plugin-manager-master</module>
+        <module>testcl001</module>
+        <module>testcl002</module>
+        <module>testcl003</module>
     </modules>
 
     <properties>
@@ -190,6 +193,11 @@
         </dependency>
 
 
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>2.5.0-rc-2</version>
+        </dependency>
 
 
         <dependency>

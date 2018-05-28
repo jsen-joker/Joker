@@ -83,29 +83,58 @@ public abstract class VerticleBase extends AbstractVerticle {
         return publish(record);
     }
 
-    protected Set<Record> registeredRecords = new ConcurrentHashSet<>();
+    private Set<Record> registeredRecords = new ConcurrentHashSet<>();
     private Future<Void> publish(Record record) {
+        Future<Void> future = Future.future();
         if (serviceDiscovery == null) {
             try {
                 start();
             } catch (Exception e) {
-                throw new IllegalStateException("Cannot create discovery service");
+                future.fail(new IllegalStateException("Cannot create discovery service"));
+                return future;
             }
         }
 
-        Future<Void> future = Future.future();
-        // publish the service
-        serviceDiscovery.publish(record, ar -> {
-            if (ar.succeeded()) {
-                registeredRecords.add(record);
-                if (record.getLocation().getString("root", "").isEmpty()) {
-                    logger.info("*** 服务发现（Service）名字：" + ar.result().getName() + " ***");
-                } else {
-                    logger.info("*** 服务发现（HTTP）名字：" + ar.result().getName() + ", endpoint：" + record.getMetadata().getString("endpoint") + " ***");
+        serviceDiscovery.getRecords(r -> {
+            JsonObject r1 = r.toJson();
+            r1.remove("registration");
+            JsonObject r2 = record.toJson();
+            r2.remove("registration");
+            r2.put("status", "UP");
+            System.out.println(r1.toString());
+            System.out.println(r2.toString());
+            return r1.toString().equals(r2.toString());
+        }, ar0 -> {
+            if (ar0.succeeded() && ar0.result() != null && !ar0.result().isEmpty()) {
+                StringBuilder builder = new StringBuilder();
+                for (Record r0 : ar0.result()) {
+                    builder.append(r0.toJson().encodePrettily());
                 }
+                logger.error("服务存在：" + builder.toString());
                 future.complete();
             } else {
-                future.fail(ar.cause());
+                if (ar0.failed()) {
+                    logger.error("发布服务失败，获取服务详细信息失败");
+                    ar0.cause().printStackTrace();
+                    future.fail("发布服务失败，获取服务详细信息失败");
+                } else {
+                    // publish the service
+                    serviceDiscovery.publish(record, ar -> {
+                        if (ar.succeeded()) {
+                            registeredRecords.add(record);
+                            if (record.getLocation().getString("root", "").isEmpty()) {
+                                logger.info("*** 服务发现（Service）名字：" + ar.result().getName() + " ***");
+                            } else {
+                                logger.info("*** 服务发现（HTTP）名字：" + ar.result().getName() + ", endpoint：" + record.getMetadata().getString("endpoint") + " ***");
+                            }
+                            future.complete();
+                        } else {
+                            future.fail(ar.cause());
+                        }
+                    });
+
+
+                }
             }
         });
 
@@ -122,16 +151,16 @@ public abstract class VerticleBase extends AbstractVerticle {
      * @throws Exception
      */
     @Override
-    public void stop(Future<Void> stopFuture) throws Exception {
+    public void stop(Future<Void> stopFuture) {
         List<Future> futures = registeredRecords.stream().map(r -> {
             Future<Void> future = Future.future();
             serviceDiscovery.unpublish(r.getRegistration(), future.completer());
             return future;
         }).collect(Collectors.toList());
 
-        logger.error("records size:" + registeredRecords.size());
+        logger.debug("records size:" + registeredRecords.size());
         if (futures.isEmpty()) {
-            logger.error("empty records closed");
+            logger.debug("empty records closed");
             serviceDiscovery.close();
             stopFuture.complete();
         } else {
@@ -139,11 +168,11 @@ public abstract class VerticleBase extends AbstractVerticle {
                     .setHandler(ar -> {
                         serviceDiscovery.close();
                         if (ar.failed()) {
-                            logger.error("records close failed");
+                            logger.debug("records close failed");
                             ar.cause().printStackTrace();
                             stopFuture.fail(ar.cause());
                         } else {
-                            logger.error("records close succeed");
+                            logger.debug("records close succeed");
                             stopFuture.complete();
                         }
                     });

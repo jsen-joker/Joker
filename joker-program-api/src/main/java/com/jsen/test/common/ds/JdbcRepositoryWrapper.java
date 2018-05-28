@@ -11,6 +11,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.ext.jdbc.JDBCClient;
 import io.vertx.reactivex.ext.sql.SQLConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,11 +24,12 @@ import java.util.Optional;
  */
 public class JdbcRepositoryWrapper extends ServiceBase {
 
-  protected final JDBCClient client;
+  protected JDBCClient client;
+  private static final Logger logger = LoggerFactory.getLogger(JdbcRepositoryWrapper.class);
 
   public JdbcRepositoryWrapper(String name, Vertx vertx, JsonObject config) {
     super(name);
-    this.client = JDBCClient.createShared(io.vertx.reactivex.core.Vertx.newInstance(vertx), config);
+    this.client = JDBCClient.createNonShared(io.vertx.reactivex.core.Vertx.newInstance(vertx), config);
   }
 
   // update
@@ -389,10 +392,7 @@ public class JdbcRepositoryWrapper extends ServiceBase {
   }*/
 
   protected Single<SQLConnection> getConnection() {
-    return client.rxGetConnection().flatMap(conn -> Single.just(conn).doFinally(() -> {
-      System.out.println("close");
-      conn.close();
-    }));
+    return client.rxGetConnection().flatMap(conn -> Single.just(conn).doFinally(conn::close));
   }
 
 

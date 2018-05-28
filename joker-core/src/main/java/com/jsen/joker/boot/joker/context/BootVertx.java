@@ -98,8 +98,7 @@ public class BootVertx {
                     logger.info("<<< init joker cluster succeed >>>");
 
                     Vertx vertx = res.result();
-                    logger.error(vertx.getDelegate().getClass().getName());
-                    startVertx(vertx, future);
+                    startVertx(vertx, mgr, future);
                 } else {
                     logger.error("<<< init joker cluster failed >>>");
                     logger.error(res.cause().getMessage());
@@ -122,16 +121,17 @@ public class BootVertx {
             // options.setEventLoopPoolSize(16);
             vO.setMetricsOptions(dropwizardMetricsOptions);
             Vertx vertx = Vertx.vertx(vO);
-            startVertx(vertx, future);
+            startVertx(vertx, null, future);
         }
 
 
         return future;
     }
 
-    private void startVertx(Vertx vertx, Future<Void> future) {
+    private void startVertx(Vertx vertx, ClusterManager clusterManager, Future<Void> future) {
 
         RootVerticle rootVerticle = new RootVerticle();
+        rootVerticle.setClusterManager(clusterManager);
 
         // vertx.setPeriodic(10000, ContextDetect::detect);
 
@@ -158,7 +158,7 @@ public class BootVertx {
                     List<ContextDetect.Entry> list = listAllEntry();
                     ContextDetect.setLastEntryJars(list);
                     List<File> currentJarFiles = list.stream().filter(item -> !item.isScript).map(item -> item.file).collect(Collectors.toList());
-                    EnterContext.getDefaultEnterContext().reloadJars(currentJarFiles);
+                    EntryContext.getDefaultEnterContext().reloadJars(currentJarFiles);
                     RootVerticle.getDefaultRootVerticle().loadEntry(list).setHandler(ar -> {
                         if (ar.succeeded()) {
                             logger.info(id);

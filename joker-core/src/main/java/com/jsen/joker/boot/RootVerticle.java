@@ -1,14 +1,14 @@
 package com.jsen.joker.boot;
 
 
-import com.jsen.joker.boot.cloader.context.EnterContext;
+import com.jsen.joker.boot.cloader.context.EntryContext;
 import com.jsen.joker.boot.entity.Entry;
 import com.jsen.joker.boot.joker.context.ContextChanger;
 import com.jsen.joker.boot.joker.context.EntryManager;
 import io.vertx.core.*;
-import io.vertx.core.impl.FutureFactoryImpl;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.spi.cluster.ClusterManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +30,7 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
         return rootVerticle;
     }
 
+
     public RootVerticle() {
         rootVerticle = this;
     }
@@ -45,12 +46,12 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
 
     private static final Logger logger = LoggerFactory.getLogger(RootVerticle.class);
 
-    private EnterContext enterContext;
+    private EntryContext entryContext;
     private EntryManager entryManager;
 
     @Override
     public void start(Future<Void> startFuture) {
-        enterContext = new EnterContext();
+        entryContext = new EntryContext();
         entryManager = new EntryManager();
 
         /*
@@ -149,6 +150,58 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
         return result;
     }
 
+    public Future<Void> clearEntries(List<String> entries) {
+        List<Entry> entryList = entryManager.getEntryList().stream().filter(item -> entries.contains(item.getFilePath()))
+                .collect(Collectors.toList());
+        TreeMap<Integer, List<Entry>> uGs = entryManager.undeployGroupPart(entryList);
+
+
+
+        Future<Void> start = Future.future();
+        Future<Void> current = start;
+        for (Map.Entry<Integer, List<Entry>> entry: uGs.entrySet()) {
+            List<Entry> gList = entry.getValue();
+
+            current = current.compose(a -> {
+                Future<Void> r = Future.future();
+                CompositeFuture.all(gList.stream().map(e -> {
+                    Future future = Future.future();
+                    if (e.getState() == EntryManager.STATE.UP) {
+                        vertx.undeploy(e.getDeploymentID(), ar -> {
+                            if (ar.succeeded()) {
+                                logger.debug("停止模块：" + e.getEntryClass() + "成功");
+                            } else {
+                                logger.debug("停止模块：" + e.getEntryClass() + "失败");
+                            }
+                            entryManager.succeedStopEntry(e);
+                            future.complete();
+                        });
+                    } else {
+                        future.complete();
+                    }
+                    return future;
+                }).collect(Collectors.toList())).setHandler(cfa -> {
+                    logger.debug("priority :" + entry.getKey() + " group unDeploy finished");
+                    r.complete();
+                });
+                return r;
+            });
+
+        }
+
+        start.complete();
+
+
+
+        Future<Void> result = Future.future();
+
+        current.compose(a -> {
+            entryManager.clearAll();
+            result.complete();
+        }, result);
+        return result;
+
+    }
 
     /**
      * 按优先级加载所有entry
@@ -172,12 +225,12 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
                     dO.setConfig(config());
                     dO.setInstances(instances);
 
-                    entryList.add(new Entry(enterClass, dO,
+                    entryList.add(new Entry(entry.fileEntry.file.getAbsolutePath(), enterClass, dO,
                             EntryManager.STATE.STARTING, entry.groupId, entry.artifactId, entry.version,
                             entry.fileEntry.file.getName(), false, priority));
                 }
             } else {
-                entryList.add(new Entry(entry.fileEntry.file.getAbsolutePath(), new DeploymentOptions(),
+                entryList.add(new Entry(entry.fileEntry.file.getAbsolutePath(), entry.fileEntry.file.getAbsolutePath(), new DeploymentOptions(),
                         EntryManager.STATE.STARTING, "", "", "",
                         entry.fileEntry.file.getName(), true, 1));
             }
@@ -197,7 +250,7 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
                     Future future = Future.future();
 
                     if (!e.isScript()) {
-                        vertx.getDelegate().deployVerticle(enterContext.getVerticleClazz(e.getEntryClass()),
+                        vertx.getDelegate().deployVerticle(entryContext.getVerticleClazz(e.getEntryClass()),
                                 e.getDeploymentOptions(), ar2 -> {
                                     deployResult(future, e, e.getEntryClass(), ar2);
                                 });
@@ -242,17 +295,35 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
      * @param future
      */
     public void exit(Future<Void> future) {
-        clearAllEntry().setHandler(res -> {
-            logger.debug("stop all not core plugin succeed");
-            vertx.undeploy(selfId, ar -> {
-                if (ar.succeeded()) {
-                    logger.debug("stop core plugin succeed");
-                } else {
-                    ar.cause().printStackTrace();
-                }
-                future.complete();
+        if (clusterManager != null) {
+            clearAllEntry().compose(r -> {
+                Future<Void> future1 = Future.future();
+                clusterManager.leave(future1.completer());
+                return future1;
+            }).setHandler(res -> {
+                logger.debug("stop all not core plugin succeed");
+                vertx.undeploy(selfId, ar -> {
+                    if (ar.succeeded()) {
+                        logger.debug("stop core plugin succeed");
+                    } else {
+                        ar.cause().printStackTrace();
+                    }
+                    future.complete();
+                });
             });
-        });
+        } else {
+            clearAllEntry().setHandler(res -> {
+                logger.debug("stop all not core plugin succeed");
+                vertx.undeploy(selfId, ar -> {
+                    if (ar.succeeded()) {
+                        logger.debug("stop core plugin succeed");
+                    } else {
+                        ar.cause().printStackTrace();
+                    }
+                    future.complete();
+                });
+            });
+        }
     }
     public JsonArray allEntries() {
         JsonArray array = new JsonArray();
@@ -260,5 +331,12 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
             array.add(entry.toJson());
         });
         return array;
+    }
+
+    private ClusterManager clusterManager;
+
+    public RootVerticle setClusterManager(ClusterManager clusterManager) {
+        this.clusterManager = clusterManager;
+        return this;
     }
 }

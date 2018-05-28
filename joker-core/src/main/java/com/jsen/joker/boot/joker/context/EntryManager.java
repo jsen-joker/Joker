@@ -24,10 +24,6 @@ public class EntryManager {
         this.entryList = new ArrayList<>();
     }
 
-    public void createEntry(String entryClass, String groupID, String artifactId, String version, String fileName, DeploymentOptions deploymentOptions, boolean isScript, int priority) {
-        entryList.add(new Entry(entryClass, deploymentOptions, STATE.STARTING, groupID, artifactId, version, fileName, isScript, priority));
-    }
-
     public void failedStartEntry(Entry entry) {
         entry.setState(STATE.START_FAILED);
     }
@@ -63,6 +59,11 @@ public class EntryManager {
     }
 
     public TreeMap<Integer, List<Entry>> undeployGroup() {
+        TreeMap<Integer, List<Entry>> ts = new TreeMap<>(entryList.stream().collect(Collectors.groupingBy(Entry::getPriority)));
+        return ts;
+    }
+
+    public TreeMap<Integer, List<Entry>> undeployGroupPart(List<Entry> entryList) {
         TreeMap<Integer, List<Entry>> ts = new TreeMap<>(entryList.stream().collect(Collectors.groupingBy(Entry::getPriority)));
         return ts;
     }

@@ -44,7 +44,7 @@ public class FileSystemDetector {
 
         if (!add.isEmpty() || !del.isEmpty()) {
             lastDetect = currentDetect;
-            onFileChangeListener.change(currentDetect, add, del);
+            onFileChangeListener.change(add, del);
         }
     }
 
@@ -76,7 +76,7 @@ public class FileSystemDetector {
     }
 
     public interface OnFileChangeListener {
-        void change(List<FileEntry> current, List<FileEntry> add, List<FileEntry> del);
+        void change(List<FileEntry> add, List<FileEntry> del);
     }
 
 }
