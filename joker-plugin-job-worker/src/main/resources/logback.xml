@@ -13,6 +13,7 @@
         <encoder>
             <pattern>${CONSOLE_LOG_PATTERN}</pattern>
         </encoder>
+        <filter class="com.jsen.redis.schedule.worker.job.web.log.LogFilter"/>
     </appender>
 
     <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -25,6 +26,7 @@
             </pattern>
         </encoder>
         <append>true</append>
+        <filter class="com.jsen.redis.schedule.worker.job.web.log.LogFilter"/>
     </appender>
 
     <root level="debug">

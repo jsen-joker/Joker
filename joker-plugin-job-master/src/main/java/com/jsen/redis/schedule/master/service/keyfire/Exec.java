@@ -90,7 +90,6 @@ public class Exec {
 
             return r;
         }).compose(resu -> {
-            logger.error("set result:" + resu);
             Future<List<String>> addressList = Future.future();
             redisClient.keys(Prefix.worker + "*", r -> {
                 if (r.succeeded()) {

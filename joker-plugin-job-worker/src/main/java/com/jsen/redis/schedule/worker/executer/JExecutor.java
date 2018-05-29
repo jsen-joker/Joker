@@ -1,9 +1,11 @@
 package com.jsen.redis.schedule.worker.executer;
 
+import com.google.common.collect.Lists;
 import com.jsen.redis.schedule.master.Prefix;
 import com.jsen.redis.schedule.master.task.JobConf;
-import com.jsen.redis.schedule.master.task.sk.IJob;
+import com.jsen.redis.schedule.worker.job.IJob;
 import groovy.lang.GroovyClassLoader;
+import io.vertx.core.CompositeFuture;
 import io.vertx.redis.RedisClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,18 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class JExecutor {
 
+    // private static Lock lock = new ReentrantLock();
+
+    public final Object mutex;
+    private static JExecutor jExecutor;
+    public static JExecutor getDefaultJExecutor() {
+        return jExecutor;
+    }
+    public JExecutor() {
+        jExecutor = this;
+        this.mutex = this;
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(JExecutor.class);
 
     private static ExecutorService executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
@@ -32,22 +46,29 @@ public class JExecutor {
     /**
      * 为了可以执行定时任务， 这里设置Key为UUID，也就是可以执行两个相同的任务
      */
-    private static List<Pair> jobs = new ArrayList<>();
+    private static List<Pair> jobs = Collections.synchronizedList(new ArrayList<>());
+    // private static List<Pair> jobs = new ArrayList<>();
 
-    public static int getPoolSize() {
-        return jobs.size();
+    public int getPoolSize() {
+        synchronized (mutex) {
+            return jobs.size();
+        }
     }
 
-    public static List<Pair> getJobs() {
-        return jobs;
+    public List<Pair> getJobs() {
+        synchronized (mutex) {
+            return jobs;
+        }
     }
 
-    public static boolean exec(JobConf baseJob, RedisClient redisClient) throws Exception {
+    public boolean exec(JobConf baseJob, RedisClient redisClient) throws Exception {
 
-        for (Pair pair: jobs) {
-            if (pair.taskID.equals(baseJob.getTaskID())) {
-                logger.error("任务存在");
-                return false;
+        synchronized (mutex) {
+            for (Pair pair: jobs) {
+                if (pair.taskID.equals(baseJob.getTaskID())) {
+                    logger.error("任务存在");
+                    return false;
+                }
             }
         }
 
@@ -62,7 +83,9 @@ public class JExecutor {
                 Pair pair = new Pair(baseJob.getTaskID(), iJob);
                 lifeCycleCall(baseJob, redisClient, iJob, pair);
                 pair.future = executorService.submit(iJob::exec);
-                jobs.add(pair);
+                synchronized (mutex) {
+                    jobs.add(pair);
+                }
             } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
                 e.printStackTrace();
                 throw e;
@@ -76,7 +99,9 @@ public class JExecutor {
                 Pair pair = new Pair(baseJob.getTaskID(), iJob);
                 lifeCycleCall(baseJob, redisClient, iJob, pair);
                 pair.future = executorService.submit(iJob::exec);
-                jobs.add(pair);
+                synchronized (mutex) {
+                    jobs.add(pair);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 throw e;
@@ -85,40 +110,56 @@ public class JExecutor {
         return true;
     }
 
-    private static void lifeCycleCall(JobConf baseJob, RedisClient redisClient, IJob iJob, Pair pair) {
+    private void lifeCycleCall(JobConf baseJob, RedisClient redisClient, IJob iJob, Pair pair) {
         iJob.setLifeCycle(new IJob.LifeCycle() {
             @Override
             public void complete() {
-                jobs.remove(pair);
-                logger.debug("任务：" + baseJob.getTaskID()+ "执行完成");
-                if (JobConf.isSingleJob(baseJob)) {
-                    redisClient.del(Prefix.schedule + baseJob.getTaskID(), ar -> {});
+                synchronized (mutex) {
+                    jobs.remove(pair);
                 }
-                redisClient.del(Prefix.task + baseJob.getTaskID(), ar -> {});
+                logger.debug("任务：" + baseJob.getTaskID()+ "执行完成");
+                List<io.vertx.core.Future> futures = Lists.newArrayList();
+                if (JobConf.isSingleJob(baseJob)) {
+                    io.vertx.core.Future<Void> f = io.vertx.core.Future.future();
+                    futures.add(f);
+                    redisClient.del(Prefix.schedule + baseJob.getTaskID(), r -> f.complete());
+                }
+                final io.vertx.core.Future<Void> f = io.vertx.core.Future.future();
+                futures.add(f);
+                redisClient.del(Prefix.task + baseJob.getTaskID(), r -> f.complete());
                 baseJob.setIndex(baseJob.getIndex() + 1);
-                redisClient.set(baseJob.getTaskID(), baseJob.toJson().toString(), r -> {});
+                final io.vertx.core.Future<Void> f2 = io.vertx.core.Future.future();
+                futures.add(f2);
+                redisClient.set(baseJob.getTaskID(), baseJob.toJson().toString(), r -> f2.complete());
+                CompositeFuture.all(futures).setHandler(r -> {});
             }
 
             @Override
             public void stop() {
-                jobs.remove(pair);
-                redisClient.del(Prefix.task + baseJob.getTaskID(), ar -> {});
+                synchronized (mutex) {
+                    jobs.remove(pair);
+                }
+                redisClient.del(Prefix.task + baseJob.getTaskID(), ar -> {
+                });
             }
         });
     }
 
-    public static boolean stop(String taskID) {
+    public boolean stop(String taskID) {
         List<Pair> remove = new ArrayList<>();
-        for (Pair pair:jobs) {
-            if (pair.taskID.equals(taskID)) {
-                pair.iJob.stop();
-                Future future = pair.future;
-                future.cancel(true);
-                remove.add(pair);
+        synchronized (mutex) {
+            for (int i = 0; i < jobs.size(); i++) {
+                Pair pair = jobs.get(i);
+                if (pair.taskID.equals(taskID)) {
+                    pair.iJob.stop();
+                    Future future = pair.future;
+                    future.cancel(true);
+                    remove.add(pair);
+                }
             }
-        }
-        for (Pair pair:remove) {
-            jobs.remove(pair);
+            for (Pair pair:remove) {
+                jobs.remove(pair);
+            }
         }
         return !remove.isEmpty();
     }

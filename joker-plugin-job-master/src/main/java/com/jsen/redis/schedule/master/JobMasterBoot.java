@@ -1,17 +1,28 @@
 package com.jsen.redis.schedule.master;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.jsen.joker.boot.loader.logback.LocalFilter;
+import com.jsen.joker.boot.loader.logback.LogFilter;
+import com.jsen.redis.schedule.master.log.LoggerMessage;
+import com.jsen.redis.schedule.master.log.LoggerQueue;
 import com.jsen.redis.schedule.master.service.endpoint.JobStatusEndpoit;
 import com.jsen.redis.schedule.master.service.keyfire.KeyFireInit;
 import com.jsen.redis.schedule.master.service.endpoint.JobConfEndpoint;
+import com.jsen.test.common.config.ConfigRetrieverHelper;
 import com.jsen.test.common.joker.JokerStaticHandlerImpl;
 import io.vertx.core.*;
+import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.StaticHandler;
+import io.vertx.ext.web.handler.sockjs.BridgeOptions;
+import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.reactivex.core.RxHelper;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.redis.RedisClient;
@@ -19,7 +30,10 @@ import io.vertx.redis.RedisOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DateFormat;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -39,46 +53,96 @@ public class JobMasterBoot extends AbstractVerticle {
         this.initSign();
     }
 
+
+    private static ExecutorService executorService = new ThreadPoolExecutor(1, 1,
+            60L, TimeUnit.SECONDS,
+            new SynchronousQueue<>(), new DThreadFactory("JobMasterBoot-remote-logs-" + UUID.randomUUID().toString()));
+
     @Override
     public void start(Future<Void> startFuture) {
         logger.info("*** Vertx start ***");
 
-        RedisOptions config = new RedisOptions().setHost("127.0.0.1");
+        new ConfigRetrieverHelper() // TODO: enhance its usage
+                .usingScanPeriod(20000L)
+                .withHttpStore("localhost", 9000, "/config/job_master")
+                .rxCreateConfig(io.vertx.reactivex.core.Vertx.newInstance(vertx)).doOnError(startFuture::fail).subscribe(c -> {
 
-        redis = RedisClient.create(vertx, config);
-        webClient = WebClient.create(vertx);
+            logger.error(c.encodePrettily());
+            RedisOptions config = new RedisOptions().setHost(c.getString("redis.host", "127.0.0.1")).setPort(c.getInteger("redis.port", 6379));
 
-        KeyFireInit.init(vertx.eventBus(), redis, webClient);
+            redis = RedisClient.create(vertx, config);
+            webClient = WebClient.create(vertx);
+
+            KeyFireInit.init(vertx.eventBus(), redis, webClient);
 
 
-        Router router = Router.router(vertx);
-        router.route().handler(BodyHandler.create());
-        // router.route().failureHandler(this::notFound);
-        cros(router.route());
+            Router router = Router.router(vertx);
+            router.route().handler(BodyHandler.create());
+            // router.route().failureHandler(this::notFound);
+            cros(router.route());
 
-        JobConfEndpoint jobConfEndpoint = new JobConfEndpoint(redis, webClient);
+            JobConfEndpoint jobConfEndpoint = new JobConfEndpoint(redis, webClient);
 
-        /*
-         * 在Redis中添加或删除 任务
-         */
-        router.route("/job/add").handler(jobConfEndpoint::add);
-        router.route("/job/del/:taskID").handler(jobConfEndpoint::del);
+            /*
+             * 在Redis中添加或删除 任务
+             */
+            router.route("/job/add").handler(jobConfEndpoint::add);
+            router.route("/job/del/:taskID").handler(jobConfEndpoint::del);
 
-        /*
-         * work节点 启动暂停任务
-         */
-        router.route("/job/start/:taskID").handler(jobConfEndpoint::start);
-        router.route("/job/stop/:taskID").handler(jobConfEndpoint::stop);
-        StaticHandler staticHandler = new JokerStaticHandlerImpl(this.getClass());
 
-        router.route("/*").handler(staticHandler);
 
-        new JobStatusEndpoit(redis, router);
+            SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
+            BridgeOptions options = new BridgeOptions()
+                    .addOutboundPermitted(new PermittedOptions().setAddress("job.logs"));
+            sockJSHandler.bridge(options);
+            router.route("/eventbus/*").handler(sockJSHandler);
+            LogFilter.localFilterChannel.add(new LocalFilter() {
+                @Override
+                public void filter(ILoggingEvent event) {
+                    if (event.getLevel() == Level.INFO || event.getLevel() == Level.ERROR) {
+                        LoggerMessage loggerMessage = new LoggerMessage(
+                                event.getMessage()
+                                , DateFormat.getDateTimeInstance().format(new Date(event.getTimeStamp())),
+                                event.getThreadName(),
+                                event.getLoggerName(),
+                                event.getLevel().levelStr
+                        );
+                        LoggerQueue.getInstance().push(loggerMessage);
+                    }
+                }
+            });
+            Runnable runnable= () -> {
+                while (true) {
+                    try {
+                        LoggerMessage log = LoggerQueue.getInstance().poll();
+                        if(log != null){
+                            vertx.eventBus().send("job.logs", log.toString());
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
 
-        vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("port", 3001));
-        startFuture.complete();
+            executorService.submit(runnable);
+            /*
+             * work节点 启动暂停任务
+             */
+            router.route("/job/start/:taskID").handler(jobConfEndpoint::start);
+            router.route("/job/stop/:taskID").handler(jobConfEndpoint::stop);
+            StaticHandler staticHandler = new JokerStaticHandlerImpl(this.getClass());
 
-        logger.info("*** Vertx start succeed ***");
+            router.route("/*").handler(staticHandler);
+
+            new JobStatusEndpoit(redis, router);
+
+            vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("port", c.getInteger("http.port", 3001)));
+            startFuture.complete();
+
+            logger.info("*** Vertx start succeed ***");
+
+        });
+
     }
 
     /**
@@ -178,5 +242,27 @@ public class JobMasterBoot extends AbstractVerticle {
 
         route.handler(CorsHandler.create("*")
                 .allowedHeaders(allowHeaders).allowedMethods(allowMethods));
+    }
+
+
+    static class DThreadFactory implements ThreadFactory {
+        final AtomicInteger threadNumber = new AtomicInteger(1);
+        final String namePrefix;
+
+        DThreadFactory(String namePrefix) {
+            this.namePrefix = namePrefix+"-";
+        }
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread( r,namePrefix + threadNumber.getAndIncrement());
+            if (t.isDaemon()) {
+                t.setDaemon(true);
+            }
+            if (t.getPriority() != Thread.NORM_PRIORITY) {
+                t.setPriority(Thread.NORM_PRIORITY);
+            }
+            return t;
+        }
     }
 }

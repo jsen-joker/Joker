@@ -83,9 +83,11 @@ public class EntryClassLoader extends URLClassLoader {
 
         @Override
         protected Class<?> findClass(String name) {
-            Class<?> clazz = null;
+            Class<?> clazz = findLoadedClass(name);
             try {
-                clazz = super.findClass(name);
+                if (clazz == null) {
+                    clazz = super.findClass(name);
+                }
             } catch (ClassNotFoundException e) {
                 // e.printStackTrace();
             }

@@ -51,7 +51,7 @@ public class ExecEndpoint {
 
 
         redisLock.getLock(key)
-                .compose(ok -> checkCanExec(key))
+                .compose(ok -> checkCanExec(taskID, key))
                 .compose(ok -> {
                     Future<JobConf> jobConfFuture = Future.future();
                     redisClient.get(taskID, r -> {
@@ -70,7 +70,7 @@ public class ExecEndpoint {
                 }).compose(job -> {
             if (job != null) {
                 try {
-                    if (JExecutor.exec(job, redisClient)) {
+                    if (JExecutor.getDefaultJExecutor().exec(job, redisClient)) {
                         result.complete("任务：" + taskID + "开始执行");
                     } else {
                         result.fail("任务：" + taskID + "存在");
@@ -89,23 +89,36 @@ public class ExecEndpoint {
     public void stop(RoutingContext routingContext) {
         HttpServerRequest request = routingContext.request();
         String taskID = request.getParam("taskID");
+
+        stop(taskID).setHandler(r -> {
+            if (r.succeeded()) {
+                routingContext.response().setStatusCode(200).end(r.result());
+            } else {
+                routingContext.response().setStatusCode(200).end(r.cause().getMessage());
+            }
+        });
+    }
+    private Future<String> stop(String taskID) {
         String key = Prefix.task + taskID;
 
+        Future<String> result = Future.future();
         redisLock.getLock(key).compose(ok -> checkAndDel(key))
                 .compose(ok -> {
                     Future<Long> r = Future.future();
-                    JExecutor.stop(taskID);
+                    JExecutor.getDefaultJExecutor().stop(taskID);
                     redisClient.del(key, r.completer());
                     return r;
                 }).setHandler(a -> {
             if (a.succeeded()) {
-                routingContext.response().setStatusCode(200).end("ok");
+                result.complete("ok");
             } else {
                 logger.error(a.cause().getMessage());
                 a.cause().printStackTrace();
-                routingContext.response().setStatusCode(200).end(a.cause().getMessage());
+                result.complete(a.cause().getMessage());
             }
         });
+        return result;
+
     }
 
     /**
@@ -113,10 +126,11 @@ public class ExecEndpoint {
      * 如果为空 设置为本地址 返回成功
      * 如果和本地址相等 返回 已存在 failed
      * 如果地址不相等 返回 skip failed
+     * @param taskID
      * @param key task:taskID:
      * @return
      */
-    private Future<String> checkCanExec(String key) {
+    private Future<String> checkCanExec(String taskID, String key) {
         Future<String> future = Future.future();
         redisClient.get(key, ar -> {
             if (ar.failed()) {
@@ -138,7 +152,15 @@ public class ExecEndpoint {
                 });
             } else {
                 if (selfAddress.equals(currentAddress)) {
-                    future.fail("任务已经存在，正在执行");
+                    stop(taskID).setHandler(r -> {
+                        if (r.succeeded()) {
+                            future.complete("ok");
+                        } else {
+                            logger.warn("任务在该主机运行，无法停止该任务，任务将重复运行");
+                            r.cause().printStackTrace();
+                            future.complete("ok");
+                        }
+                    });
                 } else {
                     future.fail("skip");
                 }

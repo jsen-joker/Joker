@@ -115,8 +115,8 @@ public class ConfigVerticle extends RestVerticle {
         result.setHandler(j -> {
             if (j.succeeded()) {
                 routingContext.response().putHeader("content-type", "application/json")
-                        .end(Optional.ofNullable(j.result().getJsonObject(routingContext.request().getParam("endpoint"))).orElse(new JsonObject())
-                                .encodePrettily());
+                        .end(new JsonObject(Optional.ofNullable(j.result().getString("DATA")).orElse("{}"))
+                                .toString());
             } else {
                 j.cause().printStackTrace();
                 notFound(routingContext);

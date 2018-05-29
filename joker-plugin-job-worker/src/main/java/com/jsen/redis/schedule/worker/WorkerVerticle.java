@@ -3,10 +3,7 @@ package com.jsen.redis.schedule.worker;
 import com.jsen.redis.schedule.worker.executer.JExecutor;
 import com.jsen.redis.schedule.worker.service.ExecEndpoint;
 import com.jsen.redis.schedule.master.Prefix;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
-import io.vertx.core.VertxOptions;
+import io.vertx.core.*;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
@@ -45,7 +42,6 @@ public class WorkerVerticle extends AbstractVerticle {
     public WorkerVerticle() {
         initSign();
     }
-
     @Override
     public void start(Future<Void> startFuture) {
         logger.info("*** Vertx start ***");
@@ -53,6 +49,7 @@ public class WorkerVerticle extends AbstractVerticle {
         RedisOptions config = new RedisOptions().setHost("127.0.0.1");
 
         redis = RedisClient.create(vertx, config);
+        new JExecutor();
 
 
         Router router = Router.router(vertx);
@@ -61,7 +58,7 @@ public class WorkerVerticle extends AbstractVerticle {
         cros(router.route());
 
         try {
-            selfAddress = InetAddress.getLocalHost().getHostAddress() + ":" + config().getInteger("port", 3003);
+            selfAddress = InetAddress.getLocalHost().getHostAddress() + ":" + config().getInteger("port", 9567);
         } catch (UnknownHostException e) {
             e.printStackTrace();
             startFuture.fail(e);
@@ -69,12 +66,22 @@ public class WorkerVerticle extends AbstractVerticle {
         }
 
         vertx.setPeriodic(60000, t -> {
-            redis.setex("worker:" + selfAddress, 61, JExecutor.getPoolSize() + "", ar -> {});
+            redis.setex(Prefix.worker + selfAddress, 61, JExecutor.getDefaultJExecutor().getPoolSize() + "", ar -> {});
         });
 
-        vertx.setPeriodic(500, l -> {
-            List<JExecutor.Pair> jobs = JExecutor.getJobs();
-            jobs.forEach(item -> redis.setex(Prefix.task + item.getTaskID(), 600, selfAddress, ar->{}));
+        vertx.setPeriodic(60000, l -> {
+            List<JExecutor.Pair> jobs = JExecutor.getDefaultJExecutor().getJobs();
+
+            synchronized (JExecutor.getDefaultJExecutor().mutex) {
+                jobs.forEach(item -> redis.setex(Prefix.task + item.getTaskID(), 6000, selfAddress, r -> {}));
+            }
+            /*
+            JExecutor.getDefaultJExecutor().lock();
+            CompositeFuture.all(jobs.stream().map(item -> {
+                Future<Void> future = Future.future();
+                redis.setex(Prefix.task + item.getTaskID(), 6000, selfAddress, r -> future.complete());
+                return future;
+            }).collect(Collectors.toList())).setHandler(r -> JExecutor.getDefaultJExecutor().unLock());*/
         });
 
         // System.out.println(Future.future().getClass());
@@ -97,7 +104,7 @@ public class WorkerVerticle extends AbstractVerticle {
 
     @Deprecated
     public void updateSize() {
-        redis.setex("worker:" + selfAddress, 61, JExecutor.getPoolSize() + "", ar -> {});
+        redis.setex("worker:" + selfAddress, 61, JExecutor.getDefaultJExecutor().getPoolSize() + "", ar -> {});
     }
 
     public static void main(String[] args) {
@@ -115,7 +122,7 @@ public class WorkerVerticle extends AbstractVerticle {
 
         RxHelper.deployVerticle(vertx, workerVerticle, dO).subscribe(id -> {
                     logger.info(id);
-                    workerVerticle.redis.setex("worker:" + workerVerticle.selfAddress, 61, JExecutor.getPoolSize() + "", ar -> {});
+                    workerVerticle.redis.setex("worker:" + workerVerticle.selfAddress, 61, JExecutor.getDefaultJExecutor().getPoolSize() + "", ar -> {});
                 },
                 e -> logger.error(e.getMessage()));
     }
@@ -184,7 +191,6 @@ public class WorkerVerticle extends AbstractVerticle {
         allowMethods.add(HttpMethod.PATCH);
         allowMethods.add(HttpMethod.PUT);
 
-        route.handler(CorsHandler.create("*")
-                .allowedHeaders(allowHeaders).allowedMethods(allowMethods));
+        route.handler(CorsHandler.create("*").allowedHeaders(allowHeaders).allowedMethods(allowMethods));
     }
 }

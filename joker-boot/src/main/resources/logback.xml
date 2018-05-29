@@ -25,6 +25,7 @@
             </pattern>
         </encoder>
         <append>true</append>
+        <filter class="com.jsen.joker.boot.loader.logback.LogFilter"/>
     </appender>
 
     <root level="debug">

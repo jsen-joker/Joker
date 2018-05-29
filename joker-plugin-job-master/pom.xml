@@ -23,6 +23,11 @@
             <artifactId>joker-program-api</artifactId>
             <version>1.0.3-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.jsen.joker</groupId>
+            <artifactId>joker-boot</artifactId>
+            <version>1.0.3-SNAPSHOT</version>
+        </dependency>
 
 
     </dependencies>
