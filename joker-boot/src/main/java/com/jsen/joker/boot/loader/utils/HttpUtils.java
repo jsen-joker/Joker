@@ -8,6 +8,7 @@ import java.net.URLConnection;
 
 /**
  * <p>
+ *     发送stop命令到joker-core-plugin-manager
  * </p>
  *
  * @author jsen

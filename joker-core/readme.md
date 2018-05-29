@@ -9,3 +9,5 @@ joker的核心模块，由joker-boot驱动运行该模块，一个joker实例中
 在该模块下可以使用所有vertx的api
 
 如有需要，在编程时可以引入该模块，获取一些joker系统能力
+
+对应 joker/lib目录下的joker-core.jar

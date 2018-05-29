@@ -9,12 +9,9 @@
     <packaging>pom</packaging>
     <version>1.0.3-SNAPSHOT</version>
     <modules>
-        <module>testmysql</module>
         <module>testservice1</module>
         <module>testservice2</module>
-        <module>pojo</module>
         <module>jobservice</module>
-        <module>stplugin</module>
 
         <module>joker-plugin-job-master</module>
         <module>joker-plugin-job-worker</module>

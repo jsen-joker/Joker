@@ -12,6 +12,9 @@ import java.util.Map;
 
 /**
  * <p>
+ *     start
+ *     stop
+ *     restart
  * </p>
  *
  * @author jsen
@@ -20,19 +23,23 @@ import java.util.Map;
 public class Boot {
     private static final Logger logger = LoggerFactory.getLogger(Boot.class);
 
+    public static final String START = "start";
+    public static final String STOP = "stop";
+    public static final String RESTART = "restart";
+
     public static void main(String[] args) {
 
 
-        String command = "start";
+        String command = START;
         if (args.length > 0) {
             command = args[args.length - 1];
         }
 
-        if ("start".equals(command)) {
+        if (START.equals(command)) {
             start();
-        } else if ("stop".equals(command)) {
+        } else if (STOP.equals(command)) {
             stop();
-        } else if ("restart".equals(command)) {
+        } else if (RESTART.equals(command)) {
             if (stop()) {
                 try {
                     Thread.sleep(5000);

@@ -1,2 +1,11 @@
 # joker-plugin-config
 简单的配置文件服务器
+
+plugin中基本所有的其他模块的启动都依赖于该模块。所以该模块的priority设置为10
+
+config模块配置了简单的web页面，端口为9000
+
+一般模块需要的属性有两种配置方法：
+一是在conf目录下建立properties文件，该文件会自动装换成一个map对象，并在verticle启动是设置为其config数据，这个properties是全局的，也就是所有模块都会收到
+二是在文件服务器配置，设置相应的endpoint，然后使用joker-program-api包下的new ConfigRetrieverHelper类来获取数据
+

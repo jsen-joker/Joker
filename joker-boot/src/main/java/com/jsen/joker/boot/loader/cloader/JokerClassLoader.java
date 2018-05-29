@@ -1,6 +1,5 @@
 package com.jsen.joker.boot.loader.cloader;
 
-import com.jsen.joker.boot.loader.joker.help.LibLister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * <p>
+ *     加载lib目录的资源
  * </p>
  *
  * @author jsen
@@ -29,12 +29,14 @@ public class JokerClassLoader extends URLClassLoader {
         CompletableFuture<Boolean> com = new CompletableFuture<>();
         jokerClassLoader = new JokerClassLoader(urls);
         Thread.currentThread().setContextClassLoader(jokerClassLoader);
-        // Thread.currentThread().setContextClassLoader(jokerClassLoader);
 
-        // init joker context
+        /*
+        init joker context
+         */
         try {
             Class<?> bootClazz = jokerClassLoader.loadClass("com.jsen.joker.boot.Boot");
             Method method = bootClazz.getMethod("boot");
+            @SuppressWarnings("Unchecked")
             CompletableFuture<Boolean> result = (CompletableFuture<Boolean>)method.invoke(bootClazz.newInstance());
             try {
                 if (result.get()) {
@@ -61,6 +63,7 @@ public class JokerClassLoader extends URLClassLoader {
     private JokerClassLoader(URL[] urls) {
         super(urls, findParentClassLoader());
     }
+    @Deprecated
     private JokerClassLoader(URL[] urls, ClassLoader classLoader) {
         super(urls, classLoader);
     }

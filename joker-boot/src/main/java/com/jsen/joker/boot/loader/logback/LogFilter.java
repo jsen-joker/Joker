@@ -9,6 +9,8 @@ import java.util.List;
 
 /**
  * <p>
+ *     添加log filter
+ *     注意在模块卸载的时候移除filter，不然会发生异常
  * </p>
  *
  * @author jsen

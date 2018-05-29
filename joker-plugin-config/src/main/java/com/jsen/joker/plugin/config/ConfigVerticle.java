@@ -62,7 +62,7 @@ public class ConfigVerticle extends RestVerticle {
                 StaticHandler staticHandler = new JokerStaticHandlerImpl(this.getClass());
                 router.route("/*").handler(staticHandler);
 
-                vertx.createHttpServer().requestHandler(router::accept).listen(9000);
+                vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("config.port", 9000));
                 startFuture.complete();
 
                 root = PathHelp.getJokerRoot();
