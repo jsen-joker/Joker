@@ -49,6 +49,8 @@ public class JobMasterBoot extends AbstractVerticle {
     WebClient webClient;
     private RedisClient redis;
 
+    private LocalFilter localFilter;
+
     public JobMasterBoot() {
         this.initSign();
     }
@@ -60,14 +62,13 @@ public class JobMasterBoot extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> startFuture) {
-        logger.info("*** Vertx start ***");
+        System.out.println("15");
 
         new ConfigRetrieverHelper() // TODO: enhance its usage
                 .usingScanPeriod(20000L)
                 .withHttpStore("localhost", 9000, "/config/job_master")
                 .rxCreateConfig(io.vertx.reactivex.core.Vertx.newInstance(vertx)).doOnError(startFuture::fail).subscribe(c -> {
 
-            logger.error(c.encodePrettily());
             RedisOptions config = new RedisOptions().setHost(c.getString("redis.host", "127.0.0.1")).setPort(c.getInteger("redis.port", 6379));
 
             redis = RedisClient.create(vertx, config);
@@ -96,7 +97,7 @@ public class JobMasterBoot extends AbstractVerticle {
                     .addOutboundPermitted(new PermittedOptions().setAddress("job.logs"));
             sockJSHandler.bridge(options);
             router.route("/eventbus/*").handler(sockJSHandler);
-            LogFilter.localFilterChannel.add(new LocalFilter() {
+            localFilter = new LocalFilter() {
                 @Override
                 public void filter(ILoggingEvent event) {
                     if (event.getLevel() == Level.INFO || event.getLevel() == Level.ERROR) {
@@ -110,7 +111,8 @@ public class JobMasterBoot extends AbstractVerticle {
                         LoggerQueue.getInstance().push(loggerMessage);
                     }
                 }
-            });
+            };
+            LogFilter.localFilterChannel.add(localFilter);
             Runnable runnable= () -> {
                 while (true) {
                     try {
@@ -139,7 +141,6 @@ public class JobMasterBoot extends AbstractVerticle {
             vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("port", c.getInteger("http.port", 3001)));
             startFuture.complete();
 
-            logger.info("*** Vertx start succeed ***");
 
         });
 
@@ -181,7 +182,7 @@ public class JobMasterBoot extends AbstractVerticle {
      */
     @Override
     public void stop(Future<Void> stopFuture) {
-
+        LogFilter.localFilterChannel.remove(localFilter);
         // 不清理 taskconf
         clear(Prefix.task)
                 .compose(c -> clear(Prefix.fire))

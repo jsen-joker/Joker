@@ -1,85 +1,12 @@
-2018-05-28 13:49:37,134 WARN [main] TestLogger [TestLogger.java : 16] Hello warn
-2018-05-28 13:50:08,961 WARN [main] TestLogger [TestLogger.java : 16] ch.qos.logback.classic.Logger
-2018-05-28 13:50:08,969 WARN [main] TestLogger [TestLogger.java : 17] Hello warn
-2018-05-28 13:58:40,481 WARN [main] TestLogger [TestLogger.java : 16] ch.qos.logback.classic.Logger
-2018-05-28 13:58:40,488 WARN [main] TestLogger [TestLogger.java : 18] Hello warn
-2018-05-28 13:58:54,937 WARN [main] TestLogger [TestLogger.java : 17] ch.qos.logback.classic.Logger
-2018-05-28 13:59:18,403 WARN [main] TestLogger [TestLogger.java : 19] Hello warn
-2018-05-28 13:59:26,657 WARN [main] TestLogger [TestLogger.java : 17] ch.qos.logback.classic.Logger
-2018-05-28 14:10:49,576 WARN [main] TestLogger [TestLogger.java : 19] Hello warn
-2018-05-28 14:10:52,923 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:10:52,938 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:11:37,943 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:11:37,953 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:11:47,598 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:11:47,606 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:11:54,238 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:11:54,248 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:12:36,436 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:12:36,446 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:12:52,195 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:12:52,204 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:31:00,459 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:31:00,469 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:32:09,662 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:32:09,671 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:32:39,826 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:32:39,835 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:34:28,193 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:34:28,197 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:34:47,878 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:34:47,881 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:45:36,628 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:45:36,632 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:46:42,801 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:46:42,805 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:54:19,976 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:54:19,979 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:55:11,414 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:55:11,418 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:55:38,865 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:55:38,869 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:56:10,011 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:56:10,015 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 14:57:06,118 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 14:57:06,121 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:08:45,276 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:08:45,280 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:10:50,381 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:10:50,384 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:11:30,835 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:11:30,840 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:13:45,838 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:13:45,844 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:14:24,919 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:14:24,926 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:14:26,785 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:14:26,790 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:16:55,001 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:16:55,005 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:17:12,565 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:17:12,569 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:20:31,558 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:20:31,564 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:37:54,785 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:37:54,789 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:40:08,106 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:40:08,110 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:45:29,693 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:45:29,696 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:46:00,453 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:46:00,457 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:48:45,860 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:48:45,866 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:53:10,604 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:53:10,607 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 15:55:51,288 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 15:55:51,294 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 16:01:23,952 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 16:01:23,956 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 17:07:42,188 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 17:07:42,193 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 17:13:33,763 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 17:13:33,767 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
-2018-05-28 17:33:06,612 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
-2018-05-28 17:33:06,616 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
+2018-05-29 10:33:53,786 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
+2018-05-29 10:33:53,791 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
+2018-05-29 10:48:42,144 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
+2018-05-29 10:48:42,148 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
+2018-05-29 10:51:54,809 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
+2018-05-29 10:51:54,813 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
+2018-05-29 10:58:00,327 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
+2018-05-29 10:58:00,331 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
+2018-05-29 11:05:48,883 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
+2018-05-29 11:05:48,887 WARN [main] TestLogger [TestLogger.java : 21] Hello warn
+2018-05-29 11:42:28,868 WARN [main] TestLogger [TestLogger.java : 19] ch.qos.logback.classic.Logger
+2018-05-29 11:42:28,872 WARN [main] TestLogger [TestLogger.java : 21] Hello warn

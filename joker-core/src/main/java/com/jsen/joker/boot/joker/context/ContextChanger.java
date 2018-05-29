@@ -51,6 +51,8 @@ public class ContextChanger implements FileSystemDetector.OnFileChangeListener {
         } else {
 
             // delete
+
+            logger.debug("删除静态文件");
             del.forEach(item -> {
                 String fileName = item.file.getName();
                 if (fileName.contains(".")) {
@@ -61,6 +63,7 @@ public class ContextChanger implements FileSystemDetector.OnFileChangeListener {
                     file.delete();
                 }
             });
+            // 解压静态文件
             extractJarResource(add);
             // reload
             RootVerticle.getDefaultRootVerticle().clearEntries(del.stream().map(item -> item.file.getAbsolutePath()).collect(Collectors.toList())).setHandler(ar0 -> {

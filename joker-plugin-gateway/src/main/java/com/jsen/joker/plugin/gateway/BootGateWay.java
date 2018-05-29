@@ -57,11 +57,9 @@ public class BootGateWay extends RestVerticle {
     public void start(Future<Void> startFuture) throws Exception {
         super.start(startFuture);
 
-        logger.error(config().encodePrettily());
         new ConfigRetrieverHelper() // TODO: enhance its usage
                 .withHttpStore("localhost", 9000, "/config/s_gateway")
                 .rxCreateConfig(io.vertx.reactivex.core.Vertx.newInstance(vertx)).doOnError(startFuture::fail).subscribe(config -> {
-            logger.info(config.encodePrettily());
 
             JsonObject cbOptions = config().getJsonObject("circuit-breaker") != null ?
                     config().getJsonObject("circuit-breaker") : new JsonObject();

@@ -44,7 +44,6 @@ public class WorkerVerticle extends AbstractVerticle {
     }
     @Override
     public void start(Future<Void> startFuture) {
-        logger.info("*** Vertx start ***");
 
         RedisOptions config = new RedisOptions().setHost("127.0.0.1");
 
@@ -58,7 +57,7 @@ public class WorkerVerticle extends AbstractVerticle {
         cros(router.route());
 
         try {
-            selfAddress = InetAddress.getLocalHost().getHostAddress() + ":" + config().getInteger("port", 9567);
+            selfAddress = InetAddress.getLocalHost().getHostAddress() + ":" + config().getInteger("port", 3003);
         } catch (UnknownHostException e) {
             e.printStackTrace();
             startFuture.fail(e);
@@ -97,7 +96,6 @@ public class WorkerVerticle extends AbstractVerticle {
         vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("port", 3003));
         startFuture.complete();
 
-        logger.info("*** Vertx start succeed ***");
     }
 
 

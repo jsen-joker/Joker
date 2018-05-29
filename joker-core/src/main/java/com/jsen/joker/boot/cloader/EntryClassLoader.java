@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 插件类加载器，在插件目录中搜索jar包，并为发现的资源(jar)构造一个类加载器,将对应的jar添加到classpath中
- * @author strawxdl
+ *
+ * @author jsen
  */
 public class EntryClassLoader extends URLClassLoader {
     private static final Logger logger = LoggerFactory.getLogger(EntryClassLoader.class);
@@ -43,28 +43,37 @@ public class EntryClassLoader extends URLClassLoader {
      * @param url 一个可想类加载器的classpath中添加的文件url
      */
     public void addFile(URL url, String md5) {
+        logger.debug("add jar with md5:" + md5);
         InnerClassLoader innerClassLoader = new InnerClassLoader(url, md5, this);
         classLoaderList.add(innerClassLoader);
     }
     public void del(String md5) {
-        classLoaderList.remove(new Item(md5));
+        logger.debug("del jar with md5:" + md5);
+        logger.debug(classLoaderList.size() + "");
+        for (int i = 0; i < classLoaderList.size(); i++) {
+            InnerClassLoader innerClassLoader = classLoaderList.get(i);
+            if (md5.equals(innerClassLoader.path)) {
+                innerClassLoader.delJar();
+                classLoaderList.remove(i);
+                break;
+            }
+        }
+        logger.debug(classLoaderList.size() + "");
         // maps.remove(url.getPath());
     }
 
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        Class c = findLoadedClass(name);
+        Class c = null;
 
+        for (InnerClassLoader innerClassLoader : classLoaderList) {
+            c = innerClassLoader.findClass(name);
+            if (c != null) {
+                break;
+            }
+        }
         if (c == null) {
-            for (InnerClassLoader innerClassLoader : classLoaderList) {
-                c = innerClassLoader.findClass(name);
-                if (c != null) {
-                    break;
-                }
-            }
-            if (c == null) {
-                c = super.loadClass(name, resolve);
-            }
+            c = super.loadClass(name, resolve);
         }
         if (resolve) {
             resolveClass(c);
@@ -74,12 +83,22 @@ public class EntryClassLoader extends URLClassLoader {
 
     private static class InnerClassLoader extends URLClassLoader {
         private String path;
+        private JarURLConnection jarURLConnection = null;
 
         InnerClassLoader(URL url, String md5, EntryClassLoader parent) {
-            super(new URL[] {url}, parent);
+            super(new URL[] {}, parent);
             this.path = md5;
+            try {
+                URLConnection uc = url.openConnection();
+                if (uc instanceof JarURLConnection) {
+                    jarURLConnection = (JarURLConnection) uc;
+                    jarURLConnection.getManifest();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            addURL(url);
         }
-
 
         @Override
         protected Class<?> findClass(String name) {
@@ -94,19 +113,16 @@ public class EntryClassLoader extends URLClassLoader {
             return clazz;
         }
 
-        /*
-
-        @Override
-        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            // First, check if the class has already been loaded
-            Class<?> c = classes.get(name);
-            if (c == null) {
-                if (parent != null) {
-                    c = parent.loadClass(name, false);
+        protected void delJar() {
+            if (jarURLConnection != null) {
+                logger.debug("close jar url connection");
+                try {
+                    jarURLConnection.getJarFile().close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-            return c;
-        }*/
+        }
 
         @Override
         public String toString() {

@@ -102,6 +102,8 @@ public class Exec {
         }).compose(addressList -> CompositeFuture.any(addressList.stream().map(address -> {
             Future f = Future.future();
             String[] adArray = address.split(":");
+            logger.debug(Integer.valueOf(adArray[2]) + "");
+            logger.debug(adArray[1]);
             webClient.get(Integer.valueOf(adArray[2]), adArray[1], "/job/start/" + taskID).send(ar -> {
                 if (ar.succeeded()) {
                     String res = ar.result().bodyAsString();

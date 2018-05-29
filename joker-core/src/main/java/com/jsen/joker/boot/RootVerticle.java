@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
+ *     joker 入口entry，
+ *     该模块放在lib目录下，不在entry目录
  * </p>
  *
  * @author jsen
@@ -55,26 +57,18 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
         entryManager = new EntryManager();
 
         /*
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            Future<Void> future = Future.future();
-            exit(future);
-            future.setHandler(ar -> {
-                logger.error("ctrl c shutdown clean vertx distribution");
-            });
-        }));*/
-
-        // 创建一个信号处理器
+        创建一个信号处理器
+         */
         sun.misc.SignalHandler handler = signal -> {
             Future<Void> future = Future.future();
             exit(future);
             future.setHandler(ar -> {
                 if (ar.succeeded()) {
-                    logger.info("succeed ctrl c shutdown clean vertx distribution");
+                    logger.info("ctrl c 完成停止Joker节点");
                     System.exit(0);
                 } else {
                     ar.cause().printStackTrace();
-                    logger.error("failed ctrl c shutdown clean vertx distribution");
+                    logger.error("ctrl c 停止Joker节点失败");
                     System.exit(1);
                 }
             });
@@ -103,9 +97,9 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
                     if (e.getState() == EntryManager.STATE.UP) {
                         vertx.undeploy(e.getDeploymentID(), ar -> {
                             if (ar.succeeded()) {
-                                logger.debug("停止模块：" + e.getEntryClass() + "成功");
+                                logger.info("停止模块：" + e.getEntryClass() + "成功");
                             } else {
-                                logger.debug("停止模块：" + e.getEntryClass() + "失败");
+                                logger.error("停止模块：" + e.getEntryClass() + "失败");
                             }
                             entryManager.succeedStopEntry(e);
                             future.complete();
@@ -115,7 +109,7 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
                     }
                     return future;
                 }).collect(Collectors.toList())).setHandler(cfa -> {
-                    logger.debug("priority :" + entry.getKey() + " group unDeploy finished");
+                    logger.info("priority :" + entry.getKey() + " 组卸载完成");
                     r.complete();
                 });
                 return r;
@@ -135,15 +129,15 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
                 Future future = Future.future();
                 vertx.undeploy(id, ar -> {
                     if (ar.succeeded()) {
-                        logger.debug("停止模块：" + id + "成功");
+                        logger.info("卸载未卸载模块：" + id + "成功");
                     } else {
-                        logger.debug("停止模块：" + id + "失败");
+                        logger.error("卸载未卸载模块：" + id + "失败");
                     }
                     future.complete();
                 });
                 return future;
             }).collect(Collectors.toList())).setHandler(cfa -> {
-                logger.debug("undeploy entry by deployID finished");
+                logger.info("通过deploymentIDs卸载模块完成");
                 result.complete();
             });
         }, result);
@@ -169,9 +163,9 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
                     if (e.getState() == EntryManager.STATE.UP) {
                         vertx.undeploy(e.getDeploymentID(), ar -> {
                             if (ar.succeeded()) {
-                                logger.debug("停止模块：" + e.getEntryClass() + "成功");
+                                logger.info("停止模块：" + e.getEntryClass() + "成功");
                             } else {
-                                logger.debug("停止模块：" + e.getEntryClass() + "失败");
+                                logger.error("停止模块：" + e.getEntryClass() + "失败");
                             }
                             entryManager.succeedStopEntry(e);
                             future.complete();
@@ -181,7 +175,7 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
                     }
                     return future;
                 }).collect(Collectors.toList())).setHandler(cfa -> {
-                    logger.debug("priority :" + entry.getKey() + " group unDeploy finished");
+                    logger.info("priority :" + entry.getKey() + " 组卸载完成");
                     r.complete();
                 });
                 return r;
@@ -262,7 +256,7 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
 
                     return future;
                 }).collect(Collectors.toList())).setHandler(cfa -> {
-                    logger.debug("priority :" + entry.getKey() + " group deploy finished");
+                    logger.debug("priority :" + entry.getKey() + " 组加载完成");
                     r.complete();
                 });
                 return r;
@@ -301,30 +295,28 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
                 clusterManager.leave(future1.completer());
                 return future1;
             }).setHandler(res -> {
-                logger.debug("stop all not core plugin succeed");
-                vertx.undeploy(selfId, ar -> {
-                    if (ar.succeeded()) {
-                        logger.debug("stop core plugin succeed");
-                    } else {
-                        ar.cause().printStackTrace();
-                    }
-                    future.complete();
-                });
+                logger.debug("停止除了core的所有模块成功");
+                stopSelf(future);
             });
         } else {
             clearAllEntry().setHandler(res -> {
-                logger.debug("stop all not core plugin succeed");
-                vertx.undeploy(selfId, ar -> {
-                    if (ar.succeeded()) {
-                        logger.debug("stop core plugin succeed");
-                    } else {
-                        ar.cause().printStackTrace();
-                    }
-                    future.complete();
-                });
+                logger.debug("停止除了core的所有模块成功");
+                stopSelf(future);
             });
         }
     }
+
+    private void stopSelf(Future<Void> future) {
+        vertx.undeploy(selfId, ar -> {
+            if (ar.succeeded()) {
+                logger.debug("停止core模块成功");
+            } else {
+                ar.cause().printStackTrace();
+            }
+            future.complete();
+        });
+    }
+
     public JsonArray allEntries() {
         JsonArray array = new JsonArray();
         entryManager.getEntryList().forEach(entry -> {

@@ -36,33 +36,6 @@ public class EntryContext {
     }
 
     /**
-     * 加载JAR 创建新loader
-     * @param files 所有JAR包
-     */
-    public boolean reloadJars(List<FileSystemDetector.FileEntry> files) {
-        return addJars(files);
-        /*
-        EntryClassLoader nP = JokerContext.getDefaultJokerContext().getPluginClassLoader();
-        try {
-            for (File file: files) {
-                if (file.getName().endsWith(".jar")) {
-                    nP.addFile(new URL("jar:file:" + file.getAbsolutePath() + "!/"));
-                } else {
-                    nP.addFolder(file.toURI().toURL());
-                }
-            }
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            return false;
-        }
-        entryClassLoader = null;
-        entryClassLoader = nP;
-        return true;
-        */
-    }
-
-
-    /**
      * 加载JAR
      * @param files 所有JAR包
      */

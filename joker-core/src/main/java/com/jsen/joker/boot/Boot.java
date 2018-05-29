@@ -19,7 +19,6 @@ public class Boot {
     public CompletableFuture<Boolean> boot() {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         logger.info(">>> Start init joker context <<<");
-        logger.debug("current class loader is: " + getClass().getClassLoader().getClass().getName());
 
         JokerInit.init(new JokerInit.Completer() {
             @Override
