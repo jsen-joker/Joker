@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * @since 2018/5/3
  */
 public class UserServiceImpl extends JdbcRepositoryWrapper implements UserService {
-    private static final String INSERT_STATEMENT = "INSERT INTO sys_user (name, password, sex) VALUES (?, ?, ?)";
+    private static final String INSERT_STATEMENT = "INSERT INTO sys_user (name, password) VALUES (?, ?)";
     private static final String SELECT_ALL = "SELECT * FROM sys_user";
     private static final String SELECT_BY_NAME = "SELECT * FROM sys_user WHERE name = ?";
     private static final String SELECT_BY_ID = "SELECT * FROM sys_user WHERE id = ?";
@@ -46,9 +46,9 @@ public class UserServiceImpl extends JdbcRepositoryWrapper implements UserServic
 
 
     @Override
-    public void createUser(String name, String password, String sex, Handler<AsyncResult<JsonObject>> resultHandler) {
+    public void createUser(String name, String password, Handler<AsyncResult<JsonObject>> resultHandler) {
         JsonArray array = buildParams().add(name)
-                .add(MD5Util.generate(password)).add(sex);
+                .add(MD5Util.generate(password));
         effHelp(array, INSERT_STATEMENT, resultHandler);
     }
 

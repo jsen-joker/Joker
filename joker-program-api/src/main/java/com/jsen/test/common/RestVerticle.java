@@ -27,6 +27,9 @@ public abstract class RestVerticle extends VerticleBase {
 
     protected Router router;
 
+    protected String cH;
+    protected int cP;
+
     /**
      * Start the verticle.<p>
      * This is called by Vert.x when the verticle instance is deployed. Don't call it yourself.<p>
@@ -38,6 +41,8 @@ public abstract class RestVerticle extends VerticleBase {
     @Override
     public void start(Future<Void> startFuture) throws Exception {
         super.start(startFuture);
+        cH = config().getString("config.host", "localhost");
+        cP = config().getInteger("config.port", 9000);
         router = Router.router(vertx);
         router.route().handler(BodyHandler.create());
         router.route().failureHandler(this::notFound);

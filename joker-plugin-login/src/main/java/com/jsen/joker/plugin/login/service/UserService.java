@@ -38,8 +38,7 @@ public interface UserService {
 
 
 
-    void createUser(String name, String password, String sex,
-                    Handler<AsyncResult<JsonObject>> resultHandler);
+    void createUser(String name, String password, Handler<AsyncResult<JsonObject>> resultHandler);
     void deleteByName(String name, Handler<AsyncResult<JsonObject>> resultHandler);
     void deleteById(Integer id, Handler<AsyncResult<JsonObject>> resultHandler);
     void listUser(int page, int capacity, Handler<AsyncResult<List<SysUser>>> resultHandler);

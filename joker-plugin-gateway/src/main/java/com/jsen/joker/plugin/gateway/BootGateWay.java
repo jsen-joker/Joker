@@ -236,23 +236,21 @@ public class BootGateWay extends RestVerticle {
 
         logger.error(path);
         HttpClientRequest toReq = client
-                .request(context.request().method(), path, response -> {
-                    response.bodyHandler(body -> {
-                        if (response.statusCode() >= 500) { // api endpoint server error, circuit breaker should fail
-                            cbFuture.fail(response.statusCode() + ": " + body.toString());
-                        } else {
-                            HttpServerResponse toRsp = context.response()
-                                    .setStatusCode(response.statusCode());
-                            response.headers().forEach(header -> {
-                                toRsp.putHeader(header.getKey(), header.getValue());
-                            });
-                            // send response
-                            toRsp.end(body);
-                            cbFuture.complete();
-                        }
-                        ServiceDiscovery.releaseServiceObject(serviceDiscovery, client);
-                    });
-                });
+                .request(context.request().method(), path, response -> response.bodyHandler(body -> {
+                    if (response.statusCode() >= 500) { // api endpoint server error, circuit breaker should fail
+                        cbFuture.fail(response.statusCode() + ": " + body.toString());
+                    } else {
+                        HttpServerResponse toRsp = context.response()
+                                .setStatusCode(response.statusCode());
+                        response.headers().forEach(header -> {
+                            toRsp.putHeader(header.getKey(), header.getValue());
+                        });
+                        // send response
+                        toRsp.end(body);
+                        cbFuture.complete();
+                    }
+                    ServiceDiscovery.releaseServiceObject(serviceDiscovery, client);
+                }));
         // set headers
         context.request().headers().forEach(header -> {
             toReq.putHeader(header.getKey(), header.getValue());
