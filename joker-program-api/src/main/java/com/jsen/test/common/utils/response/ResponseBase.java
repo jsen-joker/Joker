@@ -5,6 +5,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 
+import java.util.Map;
+
 /**
  * <p>
  * </p>
@@ -17,8 +19,23 @@ public class ResponseBase extends JsonObject {
     private ResponseBase() {
         super();
     }
+
+
+    private ResponseBase(Map<String, Object> map) {
+        super(map);
+    }
+    private ResponseBase(JsonObject jsonObject) {
+        super(jsonObject.getMap());
+    }
+
     public static ResponseBase create() {
         return new ResponseBase();
+    }
+    public static ResponseBase create(Map<String, Object> data) {
+        return new ResponseBase(data);
+    }
+    public static ResponseBase create(JsonObject jsonObject) {
+        return new ResponseBase(jsonObject);
     }
 
     public ResponseBase code(int code) {

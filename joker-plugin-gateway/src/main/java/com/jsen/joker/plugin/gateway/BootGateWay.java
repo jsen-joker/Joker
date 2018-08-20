@@ -7,11 +7,14 @@ import com.jsen.joker.plugin.login.service.impl.UserServiceImpl;
 import com.jsen.joker.plugin.login.utils.TokenUtils;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -44,6 +47,12 @@ public class BootGateWay extends RestVerticle {
 
     private CircuitBreaker circuitBreaker;
 
+    private static final String SEC_PREFIX = "api";
+    private static final String PB_PREFIX = "pb";
+    private static final String LOGIN_PREFIX = "login";
+    private static final String SP = "/";
+    private UserService userService;
+
     /**
      * Start the verticle.<p>
      * This is called by Vert.x when the verticle instance is deployed. Don't call it yourself.<p>
@@ -58,7 +67,7 @@ public class BootGateWay extends RestVerticle {
         super.start(startFuture);
 
         new ConfigRetrieverHelper() // TODO: enhance its usage
-                .withHttpStore("localhost", 9000, "/config/s_gateway")
+                .withHttpStore(config().getString("config.host", "localhost"), config().getInteger("config.port", 9000), "/config/s_gateway")
                 .rxCreateConfig(io.vertx.reactivex.core.Vertx.newInstance(vertx)).doOnError(startFuture::fail).subscribe(config -> {
 
             JsonObject cbOptions = config().getJsonObject("circuit-breaker") != null ?
@@ -70,10 +79,13 @@ public class BootGateWay extends RestVerticle {
                             .setFallbackOnFailure(true)
                             .setResetTimeout(cbOptions.getLong("reset-timeout", 30000L))
             );
+            userService = UserService.createProxy(vertx);
+
 
             // api dispatcher
-            router.route("/login/*").handler(this::dispatchLogin);
-            router.route("/api/*").handler(this::dispatchRequests);
+            router.route("/" + LOGIN_PREFIX + "/*").handler(this::dispatchLogin);
+            router.route("/" + SEC_PREFIX + "/*").handler(this::dispatchApi);
+            router.route("/" + PB_PREFIX + "/*").handler(this::dispatchPb);
             startServer(startFuture);
         });
 
@@ -93,46 +105,51 @@ public class BootGateWay extends RestVerticle {
         return future;
     }
 
+    /**
+     * /login/endpoint/login/parameters
+     * @param context
+     */
     private void  dispatchLogin(RoutingContext context) {
-        int initialOffset = 7; // length of `/api/`
+        // length of `/login/`
+        int initialOffset = LOGIN_PREFIX.length() + 2;
+
         // run with circuit breaker in order to deal with failure
-        circuitBreaker.execute(future -> {
-            getAllEndpoints().setHandler(ar -> {
-                if (ar.succeeded()) {
-                    List<Record> recordList = ar.result();
-                    // get relative path and retrieve prefix to dispatch client
-                    String path = context.request().uri();
+        circuitBreaker.execute(future -> getAllEndpoints().setHandler(ar -> {
+            if (ar.succeeded()) {
+                List<Record> recordList = ar.result();
+                // get relative path and retrieve prefix to dispatch client
+                String path = context.request().uri();
 
-                    if (path.length() <= initialOffset) {
-                        notFound(context);
-                        future.complete();
-                        return;
-                    }
-                    String prefix = (path.substring(initialOffset)
-                            .split("/"))[0]; // /boot
+                if (path.length() <= initialOffset) {
+                    notFound(context);
+                    future.complete();
+                    return;
+                }
 
-                    // generate new relative path
-                    String newPath = path.substring(initialOffset + prefix.length());
+                // /boot
+                String prefix = (path.substring(initialOffset).split(SP))[0];
 
-                    // get one relevant HTTP client, may not exist
-                    Optional<Record> client = recordList.stream().filter(record -> prefix.equals(record.getMetadata().getString("endpoint")))
-                            .findAny(); // simple load balance
+                // generate new relative path
+                String newPath = path.substring(initialOffset + prefix.length());
 
-                    if (client.isPresent()) {
-                        if (newPath.startsWith("/login")) {
-                            doDispatch(context, newPath, serviceDiscovery.getReference(client.get()).get(), future);
-                        } else {
-                            notFound(context);
-                        }
+                // get one relevant HTTP client, may not exist
+                Optional<Record> client = recordList.stream().filter(record -> prefix.equals(record.getMetadata().getString("endpoint")))
+                        .findAny(); // simple load balance
+
+                if (client.isPresent()) {
+                    if (newPath.startsWith(SP + LOGIN_PREFIX)) {
+                        doDispatch(context, newPath, serviceDiscovery.getReference(client.get()).get(), future);
                     } else {
                         notFound(context);
-                        future.complete();
                     }
                 } else {
-                    future.fail(ar.cause());
+                    notFound(context);
+                    future.complete();
                 }
-            });
-        }).setHandler(ar -> {
+            } else {
+                future.fail(ar.cause());
+            }
+        })).setHandler(ar -> {
             if (ar.failed()) {
                 badGateway(ar.cause(), context);
             }
@@ -141,79 +158,124 @@ public class BootGateWay extends RestVerticle {
     }
 
 
-    private void dispatchRequests(RoutingContext context) {
-        int initialOffset = 5; // length of `/api/`
+    private void dispatchApi(RoutingContext context) {
+        // length of `/api/`
+        int initialOffset = SEC_PREFIX.length() + 2;
         // run with circuit breaker in order to deal with failure
         circuitBreaker.execute(future -> {
             String token = context.request().getHeader("Authorization");
             if (token == null) {
-                noAuth(context);
-                future.complete();
-            } else {
-
-                UserService userService = UserService.createProxy(vertx);
-
-                int id;
-                try {
-                    id = TokenUtils.getUserId(token);
-                } catch (Exception e) {
+                token = context.request().getParam("Authorization");
+                if (token == null) {
+                    logger.info("noauth1");
                     noAuth(context);
                     future.complete();
                     return;
                 }
-                userService.getUserByID(id, r -> {
-                    if(r.succeeded()) {
-                        JsonObject result = r.result();
-                        try {
-                            TokenUtils.validToken(token, result.getString("password"), UserServiceImpl.shortExp);
+            }
 
-                            getAllEndpoints().setHandler(ar -> {
-                                if (ar.succeeded()) {
-                                    List<Record> recordList = ar.result();
-                                    // get relative path and retrieve prefix to dispatch client
-                                    String path = context.request().uri();
+            int id;
+            try {
+                id = TokenUtils.getUserId(token);
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.info("noauth2");
+                noAuth(context);
+                future.complete();
+                return;
+            }
+            String finalToken = token;
+            userService.getUserByID(id, r -> {
+                if(r.succeeded()) {
+                    JsonObject result = r.result();
+                    try {
+                        TokenUtils.validToken(finalToken, result.getString("password"), UserServiceImpl.shortExp);
 
-                                    if (path.length() <= initialOffset) {
-                                        notFound(context);
-                                        future.complete();
-                                        return;
-                                    }
-                                    String prefix = (path.substring(initialOffset)
-                                            .split("/"))[0]; // /boot
-                                    // generate new relative path
-                                    String newPath = path.substring(initialOffset + prefix.length());
-                                    // get one relevant HTTP client, may not exist
-                                    Optional<Record> client = recordList.stream().filter(record -> prefix.equals(record.getMetadata().getString("endpoint")))
-                                            .findAny(); // simple load balance
+                        getAllEndpoints().setHandler(ar -> {
+                            dispatch(context, initialOffset, future, ar, true);
+                        });
 
-                                    if (client.isPresent()) {
-                                        doDispatch(context, newPath, serviceDiscovery.getReference(client.get()).get(), future);
-                                    } else {
-                                        notFound(context);
-                                        future.complete();
-                                    }
-                                } else {
-                                    future.fail(ar.cause());
-                                }
-                            });
-
-                        } catch (Exception e) {
-                            noAuth(context);
-                            future.complete();
-                        }
-                    } else {
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        logger.info("noauth3");
                         noAuth(context);
                         future.complete();
                     }
-                });
+                } else {
+                    r.cause().printStackTrace();
+                    logger.info(r.cause().getMessage());
+                    logger.info("noauth4");
+                    noAuth(context);
+                    future.complete();
+                }
+            });
 
-            }
 
         }).setHandler(ar -> {
             if (ar.failed()) {
                 badGateway(ar.cause(), context);
             }
         });
+    }
+
+    /**
+     *
+     * @param context
+     */
+    private void  dispatchPb(RoutingContext context) {
+        // length of `/pb/`
+        int initialOffset = PB_PREFIX.length() + 2;
+
+        // run with circuit breaker in order to deal with failure
+        circuitBreaker.execute(future -> getAllEndpoints().setHandler(ar -> {
+            dispatch(context, initialOffset, future, ar, false);
+        })).setHandler(ar -> {
+            if (ar.failed()) {
+                badGateway(ar.cause(), context);
+            }
+        });
+
+    }
+
+    private void dispatch(RoutingContext context, int initialOffset, Future<Object> future, AsyncResult<List<Record>> ar, boolean checkSecurity) {
+        if (ar.succeeded()) {
+            List<Record> recordList = ar.result();
+            // get relative path and retrieve prefix to dispatch client
+            String path = context.request().uri();
+
+            if (path.length() <= initialOffset) {
+                notFound(context);
+                future.complete();
+                return;
+            }
+
+            // /boot
+            String prefix = (path.substring(initialOffset).split(SP))[0];
+
+            // generate new relative path
+            String newPath = path.substring(initialOffset + prefix.length());
+            if (!checkSecurity && newPath.startsWith(SP + SEC_PREFIX)) {
+                noAuth(context);
+                future.complete();
+                return;
+            }
+
+            // get one relevant HTTP client, may not exist
+            Optional<Record> client = recordList.stream().filter(record -> prefix.equals(record.getMetadata().getString("endpoint")))
+                    .findAny(); // simple load balance
+
+            if (client.isPresent()) {
+                if (checkSecurity) {
+                    newPath = SP + SEC_PREFIX + newPath;
+                }
+                doDispatch(context, newPath, serviceDiscovery.getReference(client.get()).get(), future);
+            } else {
+                notFound(context);
+                future.complete();
+            }
+        } else {
+            future.fail(ar.cause());
+        }
     }
 
     /**
@@ -227,17 +289,19 @@ public class BootGateWay extends RestVerticle {
      */
     @Override
     public void stop(Future<Void> stopFuture) {
-
         circuitBreaker.close();
-        stopFuture.complete();
+        super.stop(stopFuture);
     }
 
     private void doDispatch(RoutingContext context, String path, HttpClient client, Future<Object> cbFuture) {
-
+        if (path == null || "".equals(path)) {
+            path = "/";
+        }
         logger.error(path);
         HttpClientRequest toReq = client
                 .request(context.request().method(), path, response -> response.bodyHandler(body -> {
-                    if (response.statusCode() >= 500) { // api endpoint server error, circuit breaker should fail
+                    // api endpoint server error, circuit breaker should fail
+                    if (response.statusCode() >= 500) {
                         cbFuture.fail(response.statusCode() + ": " + body.toString());
                     } else {
                         HttpServerResponse toRsp = context.response()
@@ -272,7 +336,7 @@ public class BootGateWay extends RestVerticle {
                 .end(new JsonObject().put("error", ex.getMessage()).encodePrettily());
     }
 
-    protected void noAuth(RoutingContext context) {
+    private void noAuth(RoutingContext context) {
         context.response().setStatusCode(401)
                 .putHeader("content-type", "application/json")
                 .end(new JsonObject().put("msg", "未登入用户").encodePrettily());
@@ -297,12 +361,12 @@ public class BootGateWay extends RestVerticle {
                 .end(new JsonObject().put("message", "not_implemented").encodePrettily());
     }
 
-    protected void badGateway(Throwable ex, RoutingContext context) {
+    private void badGateway(Throwable ex, RoutingContext context) {
         ex.printStackTrace();
         context.response()
                 .setStatusCode(502)
                 .putHeader("content-type", "application/json")
-                .end(new JsonObject().put("error", "bad_gateway")
+                .end(new JsonObject().put("error", "bad_gateway").put("ex", ex.getCause().getMessage())
                         //.put("message", ex.getMessage())
                         .encodePrettily());
     }

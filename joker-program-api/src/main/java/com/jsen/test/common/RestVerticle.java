@@ -1,5 +1,6 @@
 package com.jsen.test.common;
 
+import com.jsen.test.common.utils.PathHelp;
 import com.jsen.test.common.utils.response.ResponseBase;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -12,6 +13,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -44,7 +46,7 @@ public abstract class RestVerticle extends VerticleBase {
         cH = config().getString("config.host", "localhost");
         cP = config().getInteger("config.port", 9000);
         router = Router.router(vertx);
-        router.route().handler(BodyHandler.create());
+        router.route().handler(BodyHandler.create().setUploadsDirectory(new File(new File(PathHelp.getJokerRoot(), "cache"), "file").getAbsolutePath()));
         router.route().failureHandler(this::notFound);
         cros(router.route());
     }

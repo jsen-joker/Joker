@@ -12,7 +12,7 @@
     <artifactId>joker-core-plugin-manage-master</artifactId>
 
     <properties>
-        <vertx-boot-class >com.jsen.joker.core.plugin.manager.master.JokerCoreManagerMaster</vertx-boot-class>
+        <vertx-boot-class priority="10" >com.jsen.joker.core.plugin.manager.master.JokerCoreManagerMaster</vertx-boot-class>
     </properties>
 
     <dependencies>

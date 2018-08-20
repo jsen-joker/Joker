@@ -16,7 +16,6 @@ import io.vertx.serviceproxy.ServiceBinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -110,7 +109,9 @@ public abstract class VerticleBase extends AbstractVerticle {
                 for (Record r0 : ar0.result()) {
                     builder.append(r0.toJson().encodePrettily());
                 }
+                registeredRecords.addAll(ar0.result());
                 logger.error("服务存在：" + builder.toString());
+                logger.debug("registeredRecords size ：" + registeredRecords.size());
                 future.complete();
             } else {
                 if (ar0.failed()) {
@@ -124,8 +125,10 @@ public abstract class VerticleBase extends AbstractVerticle {
                             registeredRecords.add(record);
                             if (record.getLocation().getString("root", "").isEmpty()) {
                                 logger.info("*** 服务发现（Service）名字：" + ar.result().getName() + " ***");
+                                logger.debug("registeredRecords size ：" + registeredRecords.size());
                             } else {
                                 logger.info("*** 服务发现（HTTP）名字：" + ar.result().getName() + ", endpoint：" + record.getMetadata().getString("endpoint") + " ***");
+                                logger.debug("registeredRecords size ：" + registeredRecords.size());
                             }
                             future.complete();
                         } else {
@@ -142,6 +145,18 @@ public abstract class VerticleBase extends AbstractVerticle {
     }
 
     /**
+     * If your verticle has simple synchronous clean-up tasks to complete then override this method and put your clean-up
+     * code in here.
+     *
+     * @throws Exception
+     */
+    @Override
+    public void stop() throws Exception {
+        logger.debug("stop call sync");
+        super.stop();
+    }
+
+    /**
      * Stop the verticle.<p>
      * This is called by Vert.x when the verticle instance is un-deployed. Don't call it yourself.<p>
      * If your verticle does things in its shut-down which take some time then you can override this method
@@ -152,8 +167,12 @@ public abstract class VerticleBase extends AbstractVerticle {
      */
     @Override
     public void stop(Future<Void> stopFuture) {
+        logger.debug("stop call");
+
         List<Future> futures = registeredRecords.stream().map(r -> {
             Future<Void> future = Future.future();
+            logger.debug("start unpublish:" + r.getRegistration());
+            System.out.println(r);
             serviceDiscovery.unpublish(r.getRegistration(), future.completer());
             return future;
         }).collect(Collectors.toList());

@@ -110,7 +110,9 @@ public abstract class RxVerticleBase extends AbstractVerticle {
                 for (Record r0 : ar0.result()) {
                     builder.append(r0.toJson().encodePrettily());
                 }
+                registeredRecords.add(record);
                 logger.error("服务存在：" + builder.toString());
+                logger.debug("registeredRecords size ：" + registeredRecords.size());
                 future.complete();
             } else {
                 if (ar0.failed()) {
@@ -124,8 +126,10 @@ public abstract class RxVerticleBase extends AbstractVerticle {
                             registeredRecords.add(record);
                             if (record.getLocation().getString("root", "").isEmpty()) {
                                 logger.info("*** 服务发现（Service）名字：" + ar.result().getName() + " ***");
+                                logger.debug("registeredRecords size ：" + registeredRecords.size());
                             } else {
                                 logger.info("*** 服务发现（HTTP）名字：" + ar.result().getName() + ", endpoint：" + record.getMetadata().getString("endpoint") + " ***");
+                                logger.debug("registeredRecords size ：" + registeredRecords.size());
                             }
                             future.complete();
                         } else {

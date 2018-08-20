@@ -23,9 +23,14 @@ import java.util.Map;
 public class Boot {
     private static final Logger logger = LoggerFactory.getLogger(Boot.class);
 
-    public static final String START = "start";
-    public static final String STOP = "stop";
-    public static final String RESTART = "restart";
+    private static final String START = "start";
+    private static final String STOP = "stop";
+    private static final String RESTART = "restart";
+
+    interface ConfigKey {
+        String ManagerPORT = "manager.port";
+        String PORT = "port";
+    }
 
     public static void main(String[] args) {
 
@@ -54,21 +59,20 @@ public class Boot {
         }
 
     }
+    private static final String Zero = "0";
     private static boolean stop() {
         Map<String, Object> conf = ConfHelp.conf(JokerInit.getJokerRoot());
         Object port;
-        if (conf.containsKey("manager.port")) {
-            port = conf.get("manager.port");
-        } else if (conf.containsKey("port")) {
-            port = conf.get("port");
+        if (conf.containsKey(ConfigKey.ManagerPORT)) {
+            port = conf.get(ConfigKey.ManagerPORT);
         } else {
-            port = 9091;
+            port = conf.getOrDefault(ConfigKey.PORT, 9091);
         }
 
         try {
+            logger.info("正在停止Joker服务器");
             String result = HttpUtils.sendGetRequest("http://localhost:" + port + "/status/stop");
-            if ("0".equals(result.trim())) {
-                logger.info("正在停止Joker服务器");
+            if (Zero.equals(result.trim())) {
                 return true;
             } else {
                 logger.error("停止失败");

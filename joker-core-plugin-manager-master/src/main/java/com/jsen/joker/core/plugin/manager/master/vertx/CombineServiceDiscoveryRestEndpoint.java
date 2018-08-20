@@ -64,6 +64,7 @@ public class CombineServiceDiscoveryRestEndpoint {
             logger.debug(msg.address() + " hb remove " + msg.body().toString());
             jokerManagerSet.remove(msg.body().toString());
             timeoutMap.remove(msg.body().toString());
+            msg.reply("OK");
         });
 
         vertx.setPeriodic(30000, ar -> {

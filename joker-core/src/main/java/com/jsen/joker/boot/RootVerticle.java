@@ -82,7 +82,7 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
      * 按优先级卸载所有的Entry
      * @return 完成回调
      */
-    public Future<Void> clearAllEntry() {
+    private Future<Void> clearAllEntry() {
 
         Future<Void> start = Future.future();
         Future<Void> current = start;
@@ -95,10 +95,12 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
                 CompositeFuture.all(gList.stream().map(e -> {
                     Future future = Future.future();
                     if (e.getState() == EntryManager.STATE.UP) {
+                        logger.info("start undeploy vertx :" + e.getDeploymentID());
                         vertx.undeploy(e.getDeploymentID(), ar -> {
                             if (ar.succeeded()) {
                                 logger.info("停止模块：" + e.getEntryClass() + "成功");
                             } else {
+
                                 logger.error("停止模块：" + e.getEntryClass() + "失败");
                             }
                             entryManager.succeedStopEntry(e);
@@ -161,10 +163,12 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
                 CompositeFuture.all(gList.stream().map(e -> {
                     Future future = Future.future();
                     if (e.getState() == EntryManager.STATE.UP) {
+                        logger.info("start undeploy vertx :" + e.getDeploymentID());
                         vertx.undeploy(e.getDeploymentID(), ar -> {
                             if (ar.succeeded()) {
                                 logger.info("停止模块：" + e.getEntryClass() + "成功");
                             } else {
+                                logger.debug(ar.cause().getMessage());
                                 logger.error("停止模块：" + e.getEntryClass() + "失败");
                             }
                             entryManager.succeedStopEntry(e);

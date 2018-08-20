@@ -134,24 +134,8 @@ public class JokerCoreManager extends RestVerticle {
     }
 
     private void coreStop(RoutingContext routingContext) {
-        routingContext.response()
-                .end("0");
-        Future<Void> future = Future.future();
-        future.setHandler(ar -> {
-            if (ar.succeeded()) {
-                logger.info("停止Joker成功");
-                System.exit(0);
-            } else {
-                logger.error("Stop Joker failed:" + ar.cause().getMessage());
-                System.exit(1);
-            }
-        });
-        try {
-            RootVerticle.getDefaultRootVerticle().exit(future);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        routingContext.response().end("0");
+        StaticStop.stop();
     }
 
 
@@ -191,30 +175,6 @@ public class JokerCoreManager extends RestVerticle {
         }
     }
 
-    /*
-    private void remove(RoutingContext routingContext) {
-        HttpServerRequest request = routingContext.request();
-        String artifactId = request.getParam("artifactId");
-        // String groupId = request.getParam("groupId");
-        String version = request.getParam("version");
-
-        File entry = new File(Config.projectRoot, "entry");
-        File jar = new File(entry, artifactId + "-" + version + ".jar");
-
-        if (!jar.exists() || !jar.isFile()) {
-            resultData(routingContext, new JsonObject().put("code", 1).put("msg", "jar包" + jar.getName() + "不存在"));
-            return;
-        }
-
-        vertx.fileSystem().delete(jar.getAbsolutePath(), ar -> {
-            if (ar.succeeded()) {
-                resultData(routingContext, new JsonObject().put("code", 0));
-            } else {
-                resultData(routingContext, new JsonObject().put("code", 1).put("msg", "删除文件出错：" + ar.cause().getMessage()));
-            }
-        });
-    }
-    */
 
     private void addJar(Message<Object> m) {
         if (m.body() == null) {
@@ -240,30 +200,6 @@ public class JokerCoreManager extends RestVerticle {
         });
     }
 
-    /*
-    private void add(RoutingContext routingContext) {
-        HttpServerRequest request = routingContext.request();
-        String artifactId = request.getParam("artifactId");
-        String groupId = request.getParam("groupId");
-        String version = request.getParam("version");
-
-
-        File entry = new File(Config.projectRoot, "entry");
-        File jar = new File(entry, artifactId + "-" + version + ".jar");
-        if (jar.exists()) {
-            resultData(routingContext, new JsonObject().put("code", 1).put("msg", "文件存在"));
-        } else {
-            Future<Void> futn=Future.future();
-            downloader.loadData(groupId, artifactId, version, jar, futn);
-            futn.setHandler(a->{
-                if (a.succeeded()) {
-                    resultData(routingContext, new JsonObject().put("code", 0));
-                } else {
-                    resultData(routingContext, new JsonObject().put("code", 1).put("msg", "下载文件出错：" + a.cause().getMessage()));
-                }
-            });
-        }
-    }*/
 
     @Deprecated
     private void ana(RoutingContext routingContext) {
@@ -328,10 +264,17 @@ public class JokerCoreManager extends RestVerticle {
     public void stop(Future<Void> stopFuture) {
         isStopped = true;
         webClient.close();
-        logger.error("SEND REMOVE ITEM");
+        logger.debug("SEND REMOVE ITEM");
 
 
         vertx.eventBus().send(REMOVE_HB, localAddress + "-" + selfID, r -> {
+            if (r.succeeded()) {
+                logger.debug("SEND REMOVE ITEM reply succeed");
+            } else {
+                logger.debug("SEND REMOVE ITEM reply failed");
+                logger.debug(r.cause().getMessage());
+            }
+
             try {
                 super.stop(stopFuture);
             } catch (Exception e) {

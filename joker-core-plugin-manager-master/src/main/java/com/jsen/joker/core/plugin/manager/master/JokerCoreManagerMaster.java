@@ -24,6 +24,7 @@ public class JokerCoreManagerMaster extends RestVerticle {
     private static final Logger logger = LoggerFactory.getLogger(JokerCoreManagerMaster.class);
 
     // private MetricsService service;
+
     private String entryServerHost;
     private Integer entryServerPort;
 

@@ -11,6 +11,6 @@ import org.junit.Test;
 public class Md5Test {
     @Test
     public void test() {
-        System.out.println(MD5Util.generate("123456"));
+        System.out.println(MD5Util.generate(MD5Util.MD5("7h*dKf")));
     }
 }

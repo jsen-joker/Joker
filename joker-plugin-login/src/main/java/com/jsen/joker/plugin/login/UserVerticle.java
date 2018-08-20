@@ -44,7 +44,7 @@ public class UserVerticle extends RestVerticle {
 
 
 
-            // registerProxyService(UserService.class, userService);
+             registerProxyService(UserService.class, userService);
 
             // api dispatcher
             new UserController(router, userService, redisClient);
@@ -66,6 +66,6 @@ public class UserVerticle extends RestVerticle {
      */
     @Override
     public void stop(Future<Void> stopFuture) {
-        redisClient.close(stopFuture.completer());
+        redisClient.close(r-> super.stop(stopFuture));
     }
 }
