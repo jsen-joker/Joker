@@ -1,23 +1,34 @@
 # Joker
 
-一个快速开发调试微服务的服务容器
+一个**快速开发**调试**微服务**的服务**容器**
 
-## Joker是什么（理念）
+## 一、Joker是什么（理念）
 
 joker 是一个轻量级的微服务容器，专为微服务开发而生。作为一个容器，他与tomcat，docker等有什么不同。首先joker的宗旨是快速实现想要的业务模块，快速编程、快速部署。其次相较于tomcat，tomcat中发布的单位是一个个独立的网站，相互之间想要有关量，只能通过http请求和基于java的消息服务等，而joker的目标是开发一个微服务框架，所有的微服务可以在这个框架上运行，可以相互间直接调用（这里的直接调用包括但不局限于、直接的java调用，vertx的代理、eventbus调用），二docker作为一个粗粒度的容器，同样无法在通讯方面有很好的作为，joker基于vertx开发，继承了vertx的集群模式下可以直接通过eventbus访问的特点，可以非常容易的部署服务集群、并在服务间交互。而相交于spring体系，joker、vertx有着全新的不同开发模式，完全的异步化，对于熟悉node、promise的人来说非常易于上手、对于不熟悉异步开发的人，其实异步只要入门，可以非常方便的开发，而且在joker下开发，你会喜欢上jdk8的特性。
 joker的核心原理就是将所有的java字节码加载在同一个classloader下。
 
+#
+#
+## 二、joker plugin 截图
 ![image](https://raw.githubusercontent.com/jsenjobs/joker/master/third/joker_001.png)
+#
 ![image](https://raw.githubusercontent.com/jsenjobs/joker/master/third/joker_002.png)
+#
 ![image](https://raw.githubusercontent.com/jsenjobs/joker/master/third/joker_003.png)
+#
 ![image](https://raw.githubusercontent.com/jsenjobs/joker/master/third/joker_004.png)
+#
 ![image](https://raw.githubusercontent.com/jsenjobs/joker/master/third/joker_005.png)
+#
 ![image](https://raw.githubusercontent.com/jsenjobs/joker/master/third/joker_006.png)
+#
 ![image](https://raw.githubusercontent.com/jsenjobs/joker/master/third/joker_007.png)
 
-## Get Start
+## 三、Get Start
 
-## Joker目录结构：
+#
+#
+## 1、Joker目录结构：
 
 #### bin/ 
 
@@ -59,7 +70,26 @@ joker 静态资源目录
 一些说明和辅助资源
 
 
-#性能测试 
+
+
+
+#
+#
+## 2、Joker项目组成：
+### joker-boot 
+joker boot启动器，负责joker命令行解释处理，环境配置，启动运行core
+### joker-core
+joker 核心，负责joker主循环，监听joker entry变化，处理生命周期变化，所有的核心如加载卸载entry都在这里处理
+### joker-program-api
+joker 提供的简单的编程api，主要提供了适合于joker项目结构路径的一些适配，如获取joker根目录，特定的static静态资源handler，通用数据库适配等等
+### 其他的一些core-plugin
+主要是用来监听joker运行环境，并提供界面便于查看当前的joker实例信息
+### 其他的一些非core的plugin
+可以参考学习joker和vertx的编程知识。
+
+#
+#
+## 四、性能测试 
 
 性能测试采用wrk测试
 
@@ -70,7 +100,9 @@ joker 静态资源目录
 
  
 
-## Version
+#
+#
+## 五、Version
 
 #### version 0.0.1-SNAPSHOT 
 
@@ -114,8 +146,12 @@ joker 静态资源目录
 一、修改classloader加载策略，每一个文件、jar包加载一个自己的classloader，他们属于平行关系，他们属于同一个父classloader，修改了该父classloader的加载策略，loadclass时首先检查所有子类。
 二、实现更细粒度的entry部署控制，由于新的classlaoder实现，我们可以在卸载的时候只卸载删除了的文件的verticle，不用全部卸载，再更新。
 三、一些插件：基于redis的任务调度，将原来基于config文件的文件配置服务器改为使用hsqldb数据库进行配置，默认9000端口，支持在线修改，支持json格式配置。
+### version 0.0.3_03-SNAPSHOT
+一、修复joker关闭bug，二、修复卸载entry后entry实例全部清除的bug，三、修复部分组件卸载失败和卸载失败后重新加载无法注册entry的bug
 
-## deploy
+#
+#
+## 六、deploy
 
 cd bin
 
