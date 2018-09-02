@@ -1,6 +1,5 @@
 package com.jsen.joker.plugin.login.service.impl;
 
-import com.jsen.joker.plugin.login.UserVerticle;
 import com.jsen.test.common.ds.JdbcRepositoryWrapper;
 import com.jsen.test.common.utils.enc.MD5Util;
 import com.jsen.test.common.utils.response.ResponseBase;

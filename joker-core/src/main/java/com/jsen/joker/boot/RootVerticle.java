@@ -194,7 +194,7 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
         Future<Void> result = Future.future();
 
         current.compose(a -> {
-            entryManager.clearAll();
+//            entryManager.clearAll();
             result.complete();
         }, result);
         return result;
