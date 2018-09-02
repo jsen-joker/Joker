@@ -1,6 +1,20 @@
 # Joker
 
+#
+#
 一个**快速开发**调试**微服务**的服务**容器**
+
+## 快速开始
+git clone https://github.com/jsen-joker/Joker.git
+cd Joker/bin
+
+./joker.sh install
+
+./startup.sh
+
+./shutdown.sh
+
+
 
 ## 一、Joker是什么（理念）
 
