@@ -6,7 +6,7 @@
 
 ## 快速开始
 git clone https://github.com/jsen-joker/Joker.git
-cd Joker/bin
+cd Joker/joker/bin
 
 ./joker.sh install
 
