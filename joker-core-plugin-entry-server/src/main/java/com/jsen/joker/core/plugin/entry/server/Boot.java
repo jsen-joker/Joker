@@ -1,5 +1,6 @@
 package com.jsen.joker.core.plugin.entry.server;
 
+import com.jsen.joker.annotation.annotation.Entry;
 import com.jsen.joker.core.plugin.entry.server.utils.GenMaven;
 import com.jsen.joker.core.plugin.entry.server.utils.MD5Util;
 import com.jsen.test.common.RestVerticle;
@@ -35,6 +36,7 @@ import java.util.Set;
  * @author jsen
  * @since 2018/5/15
  */
+@Entry
 public class Boot extends RestVerticle {
     private static final Logger logger = LoggerFactory.getLogger(Boot.class);
     public static final String e_db_url = "enter.server.db.url";

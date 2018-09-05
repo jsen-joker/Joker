@@ -1,5 +1,6 @@
 package com.jsen.joker.plugin.login;
 
+import com.jsen.joker.annotation.annotation.Entry;
 import com.jsen.joker.plugin.login.controller.GetVerifyController;
 import com.jsen.joker.plugin.login.controller.UserController;
 import com.jsen.joker.plugin.login.service.UserService;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
  * @author ${User}
  * @since 2018/5/3
  */
+@Entry
 public class UserVerticle extends RestVerticle {
     private static final Logger logger = LoggerFactory.getLogger(UserVerticle.class);
 

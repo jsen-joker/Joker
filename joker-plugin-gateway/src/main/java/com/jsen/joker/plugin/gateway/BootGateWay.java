@@ -1,5 +1,6 @@
 package com.jsen.joker.plugin.gateway;
 
+import com.jsen.joker.annotation.annotation.Entry;
 import com.jsen.test.common.RestVerticle;
 import com.jsen.test.common.config.ConfigRetrieverHelper;
 import com.jsen.joker.plugin.login.service.UserService;
@@ -40,6 +41,7 @@ import java.util.Optional;
  * /api/endpoint /endpoint为Record中的root属性，相当于verticle资源描述符
  * /api/endpoint/real-url /real-url 为实际请求路径
  */
+@Entry
 public class BootGateWay extends RestVerticle {
     private static final Logger logger = LoggerFactory.getLogger(BootGateWay.class);
 

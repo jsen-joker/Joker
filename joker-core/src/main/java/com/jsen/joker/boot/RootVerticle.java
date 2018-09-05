@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
  * @author jsen
  * @since 2018/5/10
  */
+@com.jsen.joker.annotation.annotation.Entry
 public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
 
     private String selfId = "";

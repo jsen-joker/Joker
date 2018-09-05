@@ -1,5 +1,6 @@
 package com.jsen.joker.plugin.config;
 
+import com.jsen.joker.annotation.annotation.Entry;
 import com.jsen.joker.plugin.config.service.HSQLConfigService;
 import com.jsen.joker.plugin.config.service.impl.HSQLConfigServiceImpl;
 import com.jsen.test.common.RestVerticle;
@@ -28,6 +29,7 @@ import java.util.Optional;
  * @author jsen
  * @since 2018/5/9
  */
+@Entry(priority = 10)
 public class ConfigVerticle extends RestVerticle {
 
     private String root;

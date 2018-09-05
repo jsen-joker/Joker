@@ -84,5 +84,6 @@
     <orderEntry type="library" name="Maven: com.google.guava:guava:21.0" level="project" />
     <orderEntry type="library" name="Maven: org.jdom:jdom:2.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.hsqldb:hsqldb:2.4.1" level="project" />
+    <orderEntry type="module" module-name="joker-annotation-processor" />
   </component>
 </module>

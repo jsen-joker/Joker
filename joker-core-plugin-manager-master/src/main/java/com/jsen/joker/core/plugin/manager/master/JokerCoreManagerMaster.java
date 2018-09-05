@@ -1,5 +1,6 @@
 package com.jsen.joker.core.plugin.manager.master;
 
+import com.jsen.joker.annotation.annotation.Entry;
 import com.jsen.joker.core.plugin.manager.master.vertx.CombineServiceDiscoveryRestEndpoint;
 import com.jsen.test.common.RestVerticle;
 import com.jsen.test.common.joker.JokerStaticHandlerImpl;
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
  * @author jsen
  * @since 2018/5/19
  */
+@Entry(priority = 10)
 public class JokerCoreManagerMaster extends RestVerticle {
     private static final Logger logger = LoggerFactory.getLogger(JokerCoreManagerMaster.class);
 

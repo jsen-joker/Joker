@@ -1,5 +1,6 @@
 package com.jsen.joker.core.plugin.manager;
 
+import com.jsen.joker.annotation.annotation.Entry;
 import com.jsen.joker.boot.RootVerticle;
 import com.jsen.joker.boot.joker.Config;
 import com.jsen.joker.core.plugin.manager.utils.Downloader;
@@ -30,6 +31,7 @@ import java.util.UUID;
  * @author jsen
  * @since 2018/5/19
  */
+@Entry
 public class JokerCoreManager extends RestVerticle {
 
     private static final String GET_METRICS = "joker.manager.master.get.monitor.metrics";
