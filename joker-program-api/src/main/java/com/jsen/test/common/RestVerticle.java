@@ -32,6 +32,9 @@ public abstract class RestVerticle extends VerticleBase {
     protected String cH;
     protected int cP;
 
+
+    private boolean started = false;
+
     /**
      * Start the verticle.<p>
      * This is called by Vert.x when the verticle instance is deployed. Don't call it yourself.<p>
@@ -51,6 +54,12 @@ public abstract class RestVerticle extends VerticleBase {
         cros(router.route());
     }
 
+    /**
+     * 返回异步的数据
+     * @param context
+     * @param <T>
+     * @return
+     */
     protected <T> Handler<AsyncResult<T>> resultHandlerData(RoutingContext context) {
         return ar -> {
             if (ar.succeeded()) {
@@ -68,6 +77,13 @@ public abstract class RestVerticle extends VerticleBase {
             }
         };
     }
+
+
+    /**
+     * 返回默认格式的json数据
+     * @param context
+     * @return
+     */
     protected  Handler<AsyncResult<Integer>> resultSimpleCode(RoutingContext context) {
         return ar -> {
             if (ar.succeeded()) {
@@ -77,7 +93,7 @@ public abstract class RestVerticle extends VerticleBase {
                 } else {
                     context.response()
                             .putHeader("content-type", "application/json")
-                            .end(ResponseBase.create().code(res).encode());
+                            .end(ResponseBase.create().hcode(res).encode());
                 }
             } else {
                 internalError(context, ar.cause());
@@ -85,48 +101,98 @@ public abstract class RestVerticle extends VerticleBase {
             }
         };
     }
+
+    /**
+     * 通用http数据返回 返回Object.toString()数据格式
+     * @param context
+     */
     protected <T> void resultData(RoutingContext context, T data) {
         context.response()
                 .putHeader("content-type", "application/json")
                 .end(data.toString());
     }
+
+    /**
+     * 通用http数据返回 json数据返回
+     * @param context
+     */
     protected void resultJSON(RoutingContext context, JsonObject data) {
-        context.response().setStatusCode(400)
+        context.response().setStatusCode(200)
                 .putHeader("content-type", "application/json")
                 .end(data.encode());
     }
 
 
+    /**
+     * http错误处理，400
+     * @param context
+     */
     protected void badRequest(RoutingContext context, Throwable ex) {
         context.response().setStatusCode(400)
                 .putHeader("content-type", "application/json")
                 .end(new JsonObject().put("code", 1).put("error", ex.getMessage()).encodePrettily());
     }
 
+    /**
+     * http错误处理，404
+     * @param context
+     */
     protected void notFound(RoutingContext context) {
         context.response().setStatusCode(404)
                 .putHeader("content-type", "application/json")
                 .end(new JsonObject().put("code", 1).put("message", "not_found").encodePrettily());
     }
 
+    /**
+     * http错误处理，500
+     * @param context
+     */
     protected void internalError(RoutingContext context, Throwable ex) {
         context.response().setStatusCode(500)
                 .putHeader("content-type", "application/json")
                 .end(new JsonObject().put("code", 1).put("error", ex.getMessage()).encodePrettily());
     }
 
+    /**
+     * http错误处理，501
+     * @param context
+     */
     protected void notImplemented(RoutingContext context) {
         context.response().setStatusCode(501)
                 .putHeader("content-type", "application/json")
                 .end(new JsonObject().put("code", 1).put("message", "not_implemented").encodePrettily());
     }
 
+    /**
+     * 注册发现服务，只能在服务器未启动时注册服务
+     * @param config
+     */
     protected void discoverSelf(JsonObject config) {
+        if (started) {
+            return;
+        }
         discoveryHttpEndpoint(config.getString("app.name", "app"),
                 config.getString("http.host", "localhost"), config.getInteger("http.port", 8080),
                 config.getString("endpoint", config.getString("app.name", "app")));
     }
+    /**
+     * 注册发现服务，任何时刻都可以
+     * @param config
+     */
+    protected void discoverSelfAnyway(JsonObject config) {
+        discoveryHttpEndpoint(config.getString("app.name", "app"),
+                config.getString("http.host", "localhost"), config.getInteger("http.port", 8080),
+                config.getString("endpoint", config.getString("app.name", "app")));
+    }
+
+    /**
+     * 启动web服务, 设置服务启动标志位
+     * @param startFuture
+     */
     protected  void startServer(Future<Void> startFuture) {
+        if (started) {
+            return;
+        }
         router.route("/*").handler(this::notFound);
         if (config().containsKey("http.host")) {
             vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("http.port", 8080), config().getString("http.host"));
@@ -134,8 +200,16 @@ public abstract class RestVerticle extends VerticleBase {
             vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("http.port", 8080));
         }
         startFuture.complete();
+        started = true;
     }
+    /**
+     * 启动web服务, 设置服务启动标志位
+     * @param startFuture
+     */
     protected  void startServer(Future<Void> startFuture, Integer port) {
+        if (started) {
+            return;
+        }
         router.route("/*").handler(this::notFound);
         if (config().containsKey("http.host")) {
             vertx.createHttpServer().requestHandler(router::accept).listen(port, config().getString("http.host", "localhost"));
@@ -143,6 +217,7 @@ public abstract class RestVerticle extends VerticleBase {
             vertx.createHttpServer().requestHandler(router::accept).listen(port);
         }
         startFuture.complete();
+        started = true;
     }
 
     protected  void startServer(Future<Void> startFuture, Integer port, String host) {
@@ -151,6 +226,10 @@ public abstract class RestVerticle extends VerticleBase {
         startFuture.complete();
     }
 
+    /**
+     * 跨域辅助函数
+     * @param route
+     */
     private void cros(Route route) {
         Set<String> allowHeaders = new HashSet<>();
 

@@ -18,14 +18,17 @@ public class ResponseBase extends JsonObject {
 
     private ResponseBase() {
         super();
+        code(0);
     }
 
 
     private ResponseBase(Map<String, Object> map) {
         super(map);
+        code(0);
     }
     private ResponseBase(JsonObject jsonObject) {
         super(jsonObject.getMap());
+        code(0);
     }
 
     public static ResponseBase create() {
@@ -40,6 +43,14 @@ public class ResponseBase extends JsonObject {
 
     public ResponseBase code(int code) {
         put("code", code);
+        return this;
+    }
+    public ResponseBase hcode(int code) {
+        put("hcode", code);
+        return this;
+    }
+    public ResponseBase ecode(int code) {
+        put("ecode", code);
         return this;
     }
     public ResponseBase data(Object data) {
