@@ -1,6 +1,7 @@
 package com.jsen.joker.plugin.gateway.mirren.model;
 
 import com.google.common.collect.Sets;
+import com.hazelcast.util.StringUtil;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -17,6 +18,16 @@ import java.util.stream.Collectors;
  * @since 2018/9/6
  */
 public class Api {
+
+    public enum ApiType {
+        // http或https类型
+        HTTP,
+        // 页面跳转
+        REDIRECT,
+        // 自定义服务类型
+        CUSTOM,
+    }
+
     private String name;
     private String path;
 
@@ -30,6 +41,7 @@ public class Api {
     private Set<String> supportContentType;
 
     private ApiOptions apiOptions;
+    private ApiType apiType = ApiType.HTTP;
 
     public static Api fromJson(JsonObject obj) {
         Api api = new Api();
@@ -44,6 +56,7 @@ public class Api {
             api.setSupportContentType(((JsonArray) arr).stream().map(Object::toString).collect(Collectors.toSet()));
         }
         api.setApiOptions(ApiOptions.fromJson(obj.getJsonObject("apiOptions")));
+        api.setApiType(ApiType.valueOf(obj.getString("apiType", ApiType.HTTP.name())));
         return api;
     }
 
@@ -57,10 +70,17 @@ public class Api {
     }
 
     public String getPath() {
-        if (path.startsWith("/")) {
+        if (StringUtil.isNullOrEmpty(path)) {
+            return "/" + name;
+        } else {
+            if (path.endsWith("/")) {
+                path = path.substring(0, path.length() - 1);
+            }
+            if (path.startsWith("/")) {
+                return path;
+            }
             return path;
         }
-        return "/" + path;
     }
 
     public Api setPath(String path) {
@@ -101,6 +121,14 @@ public class Api {
         return this;
     }
 
+    public ApiType getApiType() {
+        return apiType;
+    }
+
+    public Api setApiType(ApiType apiType) {
+        this.apiType = apiType;
+        return this;
+    }
 
     @Override
     public int hashCode() {

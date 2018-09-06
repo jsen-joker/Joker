@@ -1,22 +1,23 @@
 package com.jsen.joker.plugin.gateway;
 
 import com.jsen.joker.annotation.annotation.Entry;
+import com.jsen.joker.plugin.gateway.mirren.DeployVerticle;
+import com.jsen.joker.plugin.gateway.mirren.handler.GatewayHandler;
 import com.jsen.test.common.RestVerticle;
 import com.jsen.test.common.config.ConfigRetrieverHelper;
 import com.jsen.joker.plugin.login.service.UserService;
 import com.jsen.joker.plugin.login.service.impl.UserServiceImpl;
 import com.jsen.joker.plugin.login.utils.TokenUtils;
+import com.jsen.test.common.joker.JokerStaticHandlerImpl;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
-import io.vertx.core.VertxOptions;
+import io.vertx.core.*;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.reactivex.core.RxHelper;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.servicediscovery.Record;
@@ -25,6 +26,7 @@ import io.vertx.servicediscovery.types.HttpEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,9 +49,11 @@ public class BootGateWay extends RestVerticle {
 
     private CircuitBreaker circuitBreaker;
 
+    // 权限限制访问
     private static final String SEC_PREFIX = "api";
     private static final String PB_PREFIX = "pb";
     private static final String LOGIN_PREFIX = "login";
+    private static final String GATEWAY_PREFIX = "gateway";
     private static final String SP = "/";
     private UserService userService;
 
@@ -86,7 +90,28 @@ public class BootGateWay extends RestVerticle {
             router.route("/" + LOGIN_PREFIX + "/*").handler(this::dispatchLogin);
             router.route("/" + SEC_PREFIX + "/*").handler(this::dispatchApi);
             router.route("/" + PB_PREFIX + "/*").handler(this::dispatchPb);
-            startServer(startFuture);
+
+            new GatewayHandler(SP + GATEWAY_PREFIX + SP, router, vertx.eventBus());
+
+            StaticHandler staticHandler = new JokerStaticHandlerImpl(this.getClass());
+            router.route("/*").handler(staticHandler);
+
+            List<Future> futures = new ArrayList<>();
+            // 启动系统服务Verticle
+            futures.add(Future.<String>future(sysInfo -> {
+                vertx.deployVerticle(DeployVerticle.class.getName(), new DeploymentOptions(), sysInfo);
+            }));
+
+            CompositeFuture.all(futures).setHandler(res -> {
+                if (res.succeeded()) {
+                    logger.info("gateway start succeed");
+                    startServer(startFuture);
+                } else {
+                    logger.error(res.cause().getMessage());
+                    logger.error("gateway start failed");
+                    startFuture.fail(res.cause());
+                }
+            });
         });
 
 
@@ -379,6 +404,7 @@ public class BootGateWay extends RestVerticle {
         Vertx vertx = Vertx.vertx(vO);
         DeploymentOptions dO = new DeploymentOptions();
         dO.setInstances(1);
+        dO.setConfig(new JsonObject().put("config.port", 9100));
 
         RxHelper.deployVerticle(vertx, new BootGateWay(), dO).subscribe(System.out::println,
                 System.err::println);

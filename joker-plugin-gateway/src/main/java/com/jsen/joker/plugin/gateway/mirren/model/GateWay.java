@@ -1,5 +1,6 @@
 package com.jsen.joker.plugin.gateway.mirren.model;
 
+import com.hazelcast.util.StringUtil;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -32,7 +33,17 @@ public class GateWay {
     }
 
     public String getPath() {
-        return path;
+        if (StringUtil.isNullOrEmpty(path)) {
+            return "/" + name;
+        } else {
+            if (path.endsWith("/")) {
+                path = path.substring(0, path.length() - 1);
+            }
+            if (path.startsWith("/")) {
+                return path;
+            }
+            return path;
+        }
     }
 
     public GateWay setPath(String path) {

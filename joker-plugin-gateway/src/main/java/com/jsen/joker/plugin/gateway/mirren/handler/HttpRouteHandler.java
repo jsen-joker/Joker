@@ -4,6 +4,7 @@ import com.jsen.joker.plugin.gateway.GateWayStaticInfo;
 import com.jsen.joker.plugin.gateway.HttpConstants;
 import com.jsen.joker.plugin.gateway.mirren.model.Api;
 import com.jsen.joker.plugin.gateway.mirren.model.ApiUrl;
+import com.jsen.joker.plugin.gateway.mirren.utils.Balancer;
 import com.jsen.joker.plugin.gateway.mirren.utils.SimpleApiUrlBalancer;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClient;
@@ -30,11 +31,14 @@ public class HttpRouteHandler implements Handler<RoutingContext> {
     private Api api;
 
 
+    /**
+     * tools
+     */
+    private Balancer<ApiUrl> balancer;
 
-    // tools
-    private SimpleApiUrlBalancer balancer;
-
-    // status
+    /**
+     * state
+     */
     private boolean isFine = true;
     private int prefixLen = 0;
 
@@ -45,9 +49,11 @@ public class HttpRouteHandler implements Handler<RoutingContext> {
      * @param httpClient
      */
     private HttpRouteHandler(String gateWayPath, Api api, HttpClient httpClient) {
+        super();
         this.httpClient = httpClient;
         this.api = api;
-        prefixLen = gateWayPath.length() + api.getPath().length() + 1;
+        prefixLen = gateWayPath.length() + api.getPath().length();
+        balancer = new SimpleApiUrlBalancer(api.getApiOptions().getApiUrls());
     }
     /**
      * Something has happened, so handle it.

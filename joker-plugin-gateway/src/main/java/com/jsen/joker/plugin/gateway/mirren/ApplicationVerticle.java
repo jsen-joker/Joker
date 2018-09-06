@@ -1,20 +1,22 @@
 package com.jsen.joker.plugin.gateway.mirren;
 
 import com.hazelcast.util.StringUtil;
-import com.jsen.joker.plugin.gateway.mirren.handler.HttpRouteHandler;
+import com.jsen.joker.plugin.gateway.mirren.evebtbus.EventKey;
+import com.jsen.joker.plugin.gateway.mirren.lifecycle.*;
 import com.jsen.joker.plugin.gateway.mirren.model.Api;
 import com.jsen.joker.plugin.gateway.mirren.model.GateWay;
 import com.jsen.test.common.RestVerticle;
+import com.jsen.test.common.utils.response.ResponseBase;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -27,9 +29,9 @@ import java.util.List;
  * @since 2018/9/6
  */
 public class ApplicationVerticle extends RestVerticle {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationVerticle.class);
 
     private ApiMap apiMap = new ApiMap();
-
     private GateWay gateWay;
 
     /** http客户端 */
@@ -45,21 +47,46 @@ public class ApplicationVerticle extends RestVerticle {
      */
     @Override
     public void start(Future<Void> startFuture) throws Exception {
+        super.start(startFuture);
         this.httpClient = vertx.createHttpClient();
 
         gateWay = GateWay.fromJson(config().getJsonObject("app"));
+
+        router.get("/ok").handler(r -> resultJSON(r, ResponseBase.create().code(0)));
+
+        vertx.eventBus().consumer(gateWay.getName() + ":" + EventKey.App.Api.ADD, this::addApi);
+        vertx.eventBus().consumer(gateWay.getName() + ":" + EventKey.App.Api.DEL, this::delApi);
 
         config().put("app.name", gateWay.getName());
         config().put("http.host", gateWay.getHost());
         config().put("http.port", gateWay.getPort());
         startServer(startFuture);
+        DeployVerticle.getInstance().registerApp(this);
     }
 
+    private boolean started = false;
+    /**
+     * 启动web服务, 设置服务启动标志位
+     * @param startFuture
+     */
+    @Override
+    protected  void startServer(Future<Void> startFuture) {
+        if (started) {
+            return;
+        }
+        if (config().containsKey("http.host")) {
+            vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("http.port", 8080), config().getString("http.host"));
+        } else {
+            vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("http.port", 8080));
+        }
+        startFuture.complete();
+        started = true;
+    }
 
     /**
      * eventbus
      */
-    public void appApi(Message<JsonObject> msg) {
+    private void addApi(Message<JsonObject> msg) {
         Api api = Api.fromJson(msg.body());
 
         addHttpApi(api, res -> {
@@ -70,40 +97,50 @@ public class ApplicationVerticle extends RestVerticle {
             }
         });
     }
-    private void addHttpApi(Api api, Handler<AsyncResult<Boolean>> result) {}
-    private void doAddApi(GateWay gateWay, Api api, Router router, GateWayMap gateWayMap, Handler<AsyncResult<Void>> result) {
-        ApiMap apiMap = gateWayMap.getGateway(gateWay.getName());
-        List<Route> routeChain = apiMap.createRouteChain(api.getName());
-        initServerHandler(gateWay, api, apiMap.genRoute(routeChain, router));
+    private void addHttpApi(Api api, Handler<AsyncResult<Void>> result) {
+        doAddApi(gateWay, api, router, apiMap, result);
     }
-    private void initServerHandler(GateWay gateWay, Api api, Route route) {
-        route.path(api.getPath());
-        /*
-         * 设置支持的方法，空表示支持所有
-         */
-        api.getSupportMethods().forEach(item -> route.method(HttpMethod.valueOf(item)));
-        /*
-         * 设置支持的content type，空表示支持所有
-         */
-        api.getSupportContentType().forEach(route::consumes);
-
-
-        Handler<RoutingContext> handler = HttpRouteHandler.create(gateWay.getPath(), api, httpClient);
-
-        route.handler(handler);
-
+    private void doAddApi(GateWay gateWay, Api api, Router router, ApiMap apiMap, Handler<AsyncResult<Void>> result) {
+        vertx.executeBlocking(f -> {
+            List<Route> routeChain = apiMap.createRouteChain(api.getName(), api.getPath());
+            if (routeChain == null) {
+                f.fail("path route : " + api.getPath() + " is exist in app : " + gateWay.getName());
+                return;
+            }
+            /*
+            li
+             */
+            LifeCycle.defaultChain().start(this, api, router, routeChain);
+            f.complete();
+        }, result);
     }
     /**
      * eventbus
      */
-    public void delApi(Message<String> msg) {
+    private void delApi(Message<String> msg) {
         if (StringUtil.isNullOrEmpty(msg.body())) {
             msg.fail(1, "参数:API名字不能为空");
             return;
         }
         String apiName = msg.body();
-        apiMap.deleteRouteChain(apiName);
-        msg.reply(0);
+        if (apiMap.deleteRouteChain(apiName)) {
+            LOGGER.debug("del api : " + apiName + " succeed");
+            msg.reply(0);
+        } else {
+            LOGGER.debug("no api : " + apiName + " exist in app : " + gateWay.getName());
+            msg.fail(1, "no api : " + apiName + " exist in app : " + gateWay.getName());
+        }
     }
 
+    public GateWay getGateWay() {
+        return gateWay;
+    }
+
+    public ApiMap getApiMap() {
+        return apiMap;
+    }
+
+    public HttpClient getHttpClient() {
+        return httpClient;
+    }
 }
