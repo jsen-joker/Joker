@@ -32,7 +32,14 @@ public class EntryContext {
 
     public EntryContext() {
         entryContext = this;
-        entryClassLoader = JokerContext.getDefaultJokerContext().getPluginClassLoader();
+        if (Thread.currentThread().getContextClassLoader() instanceof EntryClassLoader) {
+            logger.debug("find entryclass from thread context");
+            entryClassLoader = (EntryClassLoader) Thread.currentThread().getContextClassLoader();
+        } else {
+            logger.debug("create entryclass");
+            entryClassLoader = JokerContext.getDefaultJokerContext().getPluginClassLoader();
+        }
+//        Thread.currentThread().setContextClassLoader(entryClassLoader);
     }
 
     /**
@@ -72,7 +79,16 @@ public class EntryContext {
 
     public Class<? extends Verticle> getVerticleClazz(String clazzName) {
         try {
-           return (Class<? extends Verticle>) entryClassLoader.loadClass(clazzName);
+            return (Class<? extends Verticle>) entryClassLoader.loadClass(clazzName);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Class<?> getClazz(String clazzName) {
+        try {
+            return entryClassLoader.loadClass(clazzName);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }

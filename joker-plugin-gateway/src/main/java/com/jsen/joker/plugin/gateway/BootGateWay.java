@@ -1,8 +1,10 @@
 package com.jsen.joker.plugin.gateway;
 
 import com.jsen.joker.annotation.annotation.Entry;
+import com.jsen.joker.boot.cloader.context.EntryContext;
 import com.jsen.joker.plugin.gateway.mirren.DeployVerticle;
 import com.jsen.joker.plugin.gateway.mirren.handler.GatewayHandler;
+import com.jsen.joker.plugin.gateway.mirren.service.AppService;
 import com.jsen.test.common.RestVerticle;
 import com.jsen.test.common.config.ConfigRetrieverHelper;
 import com.jsen.joker.plugin.login.service.UserService;
@@ -57,6 +59,8 @@ public class BootGateWay extends RestVerticle {
     private static final String SP = "/";
     private UserService userService;
 
+    private AppService appService;
+
     /**
      * Start the verticle.<p>
      * This is called by Vert.x when the verticle instance is deployed. Don't call it yourself.<p>
@@ -74,6 +78,7 @@ public class BootGateWay extends RestVerticle {
                 .withHttpStore(config().getString("config.host", "localhost"), config().getInteger("config.port", 9000), "/config/s_gateway")
                 .rxCreateConfig(io.vertx.reactivex.core.Vertx.newInstance(vertx)).doOnError(startFuture::fail).subscribe(config -> {
 
+                    logger.debug(config.toString());
             JsonObject cbOptions = config().getJsonObject("circuit-breaker") != null ?
                     config().getJsonObject("circuit-breaker") : new JsonObject();
             circuitBreaker = CircuitBreaker.create(cbOptions.getString("name", "circuit-breaker"), vertx,
@@ -84,14 +89,17 @@ public class BootGateWay extends RestVerticle {
                             .setResetTimeout(cbOptions.getLong("reset-timeout", 30000L))
             );
             userService = UserService.createProxy(vertx);
+            appService = AppService.create(vertx, config());
 
 
+            logger.debug(Thread.currentThread().getContextClassLoader().getClass().toString());
             // api dispatcher
             router.route("/" + LOGIN_PREFIX + "/*").handler(this::dispatchLogin);
             router.route("/" + SEC_PREFIX + "/*").handler(this::dispatchApi);
             router.route("/" + PB_PREFIX + "/*").handler(this::dispatchPb);
 
-            new GatewayHandler(SP + GATEWAY_PREFIX + SP, router, vertx.eventBus());
+            new GatewayHandler(SP + GATEWAY_PREFIX + SP, router, vertx.eventBus(), appService);
+            logger.debug("2");
 
             StaticHandler staticHandler = new JokerStaticHandlerImpl(this.getClass());
             router.route("/*").handler(staticHandler);
@@ -100,6 +108,7 @@ public class BootGateWay extends RestVerticle {
             // 启动系统服务Verticle
             futures.add(Future.<String>future(sysInfo -> {
                 vertx.deployVerticle(DeployVerticle.class.getName(), new DeploymentOptions(), sysInfo);
+//                vertx.deployVerticle(EntryContext.getDefaultEnterContext().getVerticleClazz(DeployVerticle.class.getName()), new DeploymentOptions(), sysInfo);
             }));
 
             CompositeFuture.all(futures).setHandler(res -> {
@@ -107,6 +116,7 @@ public class BootGateWay extends RestVerticle {
                     logger.info("gateway start succeed");
                     startServer(startFuture);
                 } else {
+                    res.cause().printStackTrace();
                     logger.error(res.cause().getMessage());
                     logger.error("gateway start failed");
                     startFuture.fail(res.cause());
@@ -314,8 +324,16 @@ public class BootGateWay extends RestVerticle {
      */
     @Override
     public void stop(Future<Void> stopFuture) {
+        Future<Void> task1 = Future.future();
         circuitBreaker.close();
-        super.stop(stopFuture);
+        appService.close(task1.completer());
+        task1.setHandler(r -> {
+            if (r.succeeded()) {
+                super.stop(stopFuture);
+            } else {
+                stopFuture.fail(r.cause());
+            }
+        });
     }
 
     private void doDispatch(RoutingContext context, String path, HttpClient client, Future<Object> cbFuture) {
@@ -395,7 +413,6 @@ public class BootGateWay extends RestVerticle {
                         //.put("message", ex.getMessage())
                         .encodePrettily());
     }
-
 
     public static void main(String[] args) {
 

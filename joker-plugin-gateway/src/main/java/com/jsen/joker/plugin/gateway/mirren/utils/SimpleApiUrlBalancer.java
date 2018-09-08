@@ -1,6 +1,6 @@
 package com.jsen.joker.plugin.gateway.mirren.utils;
 
-import com.jsen.joker.plugin.gateway.mirren.model.ApiUrl;
+import com.jsen.joker.plugin.gateway.mirren.model.ApiOptionUrl;
 
 import java.util.List;
 import java.util.Set;
@@ -13,13 +13,13 @@ import java.util.stream.Collectors;
  * @author jsen
  * @since 2018/9/6
  */
-public class SimpleApiUrlBalancer implements Balancer<ApiUrl> {
+public class SimpleApiUrlBalancer implements Balancer<ApiOptionUrl> {
 
 
     private List<String> urls;
     private int _size;
-    public SimpleApiUrlBalancer(Set<ApiUrl> apiUrls) {
-       urls = apiUrls.stream().map(ApiUrl::getUrl).collect(Collectors.toList());
+    public SimpleApiUrlBalancer(Set<ApiOptionUrl> apiOptionUrls) {
+       urls = apiOptionUrls.stream().map(ApiOptionUrl::getUrl).collect(Collectors.toList());
        this._size = urls.size();
     }
 
@@ -33,8 +33,8 @@ public class SimpleApiUrlBalancer implements Balancer<ApiUrl> {
      * @return
      */
     @Override
-    public ApiUrl balance() {
-        return new ApiUrl().setUrl(urls.get(0));
+    public ApiOptionUrl balance() {
+        return new ApiOptionUrl().setUrl(urls.get(0));
     }
 
     /**
@@ -44,7 +44,7 @@ public class SimpleApiUrlBalancer implements Balancer<ApiUrl> {
      * @return
      */
     @Override
-    public ApiUrl balance(String key) {
-        return new ApiUrl().setUrl(urls.get(0));
+    public ApiOptionUrl balance(String key) {
+        return new ApiOptionUrl().setUrl(urls.get(0));
     }
 }

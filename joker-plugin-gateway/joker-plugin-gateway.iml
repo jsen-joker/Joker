@@ -8,11 +8,14 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/generated" isTestSource="false" generated="true" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="joker-program-api" />
+    <orderEntry type="module" module-name="joker-core" />
+    <orderEntry type="module" module-name="joker-boot" />
     <orderEntry type="module" module-name="joker-plugin-login" />
     <orderEntry type="library" name="Maven: com.auth0:java-jwt:3.2.0" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.8.4" level="project" />

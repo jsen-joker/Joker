@@ -57,6 +57,7 @@ public class RootVerticle extends io.vertx.reactivex.core.AbstractVerticle {
         entryContext = new EntryContext();
         entryManager = new EntryManager();
 
+
         /*
         创建一个信号处理器
          */

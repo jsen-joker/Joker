@@ -1,0 +1,83 @@
+= Cheatsheets
+
+[[Api]]
+== Api
+
+++++
+ <p>
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[apiOption]]`apiOption`|`link:dataobjects.html#ApiOption[ApiOption]`|-
+|[[apiType]]`apiType`|`link:enums.html#ApiType[ApiType]`|-
+|[[name]]`name`|`String`|-
+|[[on]]`on`|`Boolean`|-
+|[[path]]`path`|`String`|-
+|[[remark]]`remark`|`String`|-
+|[[supportContentType]]`supportContentType`|`Array of String`|-
+|[[supportMethods]]`supportMethods`|`Array of String`|-
+|===
+
+[[ApiOption]]
+== ApiOption
+
+++++
+ <p>
+ @ VxApiServerEntranceHttpOptions
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[apiOptionUrls]]`apiOptionUrls`|`Array of link:dataobjects.html#ApiOptionUrl[ApiOptionUrl]`|-
+|===
+
+[[ApiOptionUrl]]
+== ApiOptionUrl
+
+++++
+ <p>
+     一条 api 可能对应多条url
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[url]]`url`|`String`|-
+|===
+
+[[App]]
+== App
+
+++++
+ <p>
+     代表一个gateway项目
+ </p>
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[apis]]`apis`|`Array of link:dataobjects.html#Api[Api]`|-
+|[[createTime]]`createTime`|`Number (long)`|-
+|[[host]]`host`|`String`|-
+|[[name]]`name`|`String`|-
+|[[on]]`on`|`Boolean`|-
+|[[port]]`port`|`Number (Integer)`|-
+|[[remark]]`remark`|`String`|-
+|[[updateTime]]`updateTime`|`Number (long)`|-
+|===
+

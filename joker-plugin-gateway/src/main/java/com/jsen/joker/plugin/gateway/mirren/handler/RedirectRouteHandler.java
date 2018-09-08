@@ -1,7 +1,7 @@
 package com.jsen.joker.plugin.gateway.mirren.handler;
 
 import com.jsen.joker.plugin.gateway.mirren.model.Api;
-import com.jsen.joker.plugin.gateway.mirren.model.ApiUrl;
+import com.jsen.joker.plugin.gateway.mirren.model.ApiOptionUrl;
 import com.jsen.joker.plugin.gateway.mirren.utils.Balancer;
 import com.jsen.joker.plugin.gateway.mirren.utils.SimpleApiUrlBalancer;
 import io.vertx.core.Handler;
@@ -19,11 +19,11 @@ public class RedirectRouteHandler implements Handler<RoutingContext> {
     /**
      * tools
      */
-    private Balancer<ApiUrl> balancer;
+    private Balancer<ApiOptionUrl> balancer;
 
     public RedirectRouteHandler(Api api) {
         super();
-        balancer = new SimpleApiUrlBalancer(api.getApiOptions().getApiUrls());
+        balancer = new SimpleApiUrlBalancer(api.getApiOption().getApiOptionUrls());
     }
 
     @Override

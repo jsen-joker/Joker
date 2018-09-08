@@ -24,6 +24,11 @@
         </dependency>
         <dependency>
             <groupId>com.jsen.joker</groupId>
+            <artifactId>joker-core</artifactId>
+            <version>1.0.3-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jsen.joker</groupId>
             <artifactId>joker-plugin-login</artifactId>
             <version>1.0.3-SNAPSHOT</version>
         </dependency>

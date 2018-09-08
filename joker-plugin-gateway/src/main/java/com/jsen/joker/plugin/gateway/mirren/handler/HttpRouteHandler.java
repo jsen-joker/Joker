@@ -3,7 +3,7 @@ package com.jsen.joker.plugin.gateway.mirren.handler;
 import com.jsen.joker.plugin.gateway.GateWayStaticInfo;
 import com.jsen.joker.plugin.gateway.HttpConstants;
 import com.jsen.joker.plugin.gateway.mirren.model.Api;
-import com.jsen.joker.plugin.gateway.mirren.model.ApiUrl;
+import com.jsen.joker.plugin.gateway.mirren.model.ApiOptionUrl;
 import com.jsen.joker.plugin.gateway.mirren.utils.Balancer;
 import com.jsen.joker.plugin.gateway.mirren.utils.SimpleApiUrlBalancer;
 import io.vertx.core.Handler;
@@ -34,7 +34,7 @@ public class HttpRouteHandler implements Handler<RoutingContext> {
     /**
      * tools
      */
-    private Balancer<ApiUrl> balancer;
+    private Balancer<ApiOptionUrl> balancer;
 
     /**
      * state
@@ -44,16 +44,15 @@ public class HttpRouteHandler implements Handler<RoutingContext> {
 
     /**
      *
-     * @param gateWayPath gateway path /gateway
      * @param api
      * @param httpClient
      */
-    private HttpRouteHandler(String gateWayPath, Api api, HttpClient httpClient) {
+    private HttpRouteHandler(Api api, HttpClient httpClient) {
         super();
         this.httpClient = httpClient;
         this.api = api;
-        prefixLen = gateWayPath.length() + api.getPath().length();
-        balancer = new SimpleApiUrlBalancer(api.getApiOptions().getApiUrls());
+        prefixLen = api.getPath().length();
+        balancer = new SimpleApiUrlBalancer(api.getApiOption().getApiOptionUrls());
     }
     /**
      * Something has happened, so handle it.
@@ -69,11 +68,11 @@ public class HttpRouteHandler implements Handler<RoutingContext> {
         suffix = suffix + "?" + sourceRequest.query();
 
 
-        ApiUrl apiUrl = balancer.balance();
+        ApiOptionUrl apiOptionUrl = balancer.balance();
 
-        LOGGER.debug("request path : " + apiUrl.getUrl());
+        LOGGER.debug("request path : " + apiOptionUrl.getUrl());
 
-        HttpClientRequest clientRequest = httpClient.requestAbs(sourceRequest.method(), apiUrl.getUrl() + suffix);
+        HttpClientRequest clientRequest = httpClient.requestAbs(sourceRequest.method(), apiOptionUrl.getUrl() + suffix);
         _dumpHeader(sourceRequest, clientRequest);
         _handleHCException(event, clientRequest);
         _handleHCResponse(event, clientRequest);
@@ -113,8 +112,8 @@ public class HttpRouteHandler implements Handler<RoutingContext> {
     }
 
 
-    public static Handler<RoutingContext> create(String gateWayPath, Api api, HttpClient httpClient) {
-        HttpRouteHandler httpRouteHandler = new HttpRouteHandler(gateWayPath, api, httpClient);
+    public static Handler<RoutingContext> create(Api api, HttpClient httpClient) {
+        HttpRouteHandler httpRouteHandler = new HttpRouteHandler(api, httpClient);
         if (httpRouteHandler.isFine) {
             return httpRouteHandler;
         }

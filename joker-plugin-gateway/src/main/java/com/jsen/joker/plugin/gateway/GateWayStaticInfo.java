@@ -10,5 +10,5 @@ package com.jsen.joker.plugin.gateway;
 public interface GateWayStaticInfo {
 
     String VERSION = "1.0.3";
-    String USER_AGENT = "VX-API-Gateway/" + VERSION;
+    String USER_AGENT = "JOKER-API-Gateway/" + VERSION;
 }

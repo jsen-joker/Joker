@@ -1,13 +1,12 @@
 package com.jsen.joker.plugin.gateway.mirren.model;
 
 import com.google.common.collect.Sets;
-import com.hazelcast.util.StringUtil;
-import io.vertx.core.json.JsonArray;
+import com.jsen.joker.plugin.login.entity.EntityBase;
+import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -16,7 +15,8 @@ import java.util.stream.Collectors;
  * @author jsen
  * @since 2018/9/6
  */
-public class Api {
+@DataObject(generateConverter = true)
+public class Api extends EntityBase {
 
     public enum ApiType {
         // http或https类型
@@ -30,6 +30,7 @@ public class Api {
     private String name;
     private String path;
 
+
     /**
      * 支持的方法
      */
@@ -39,25 +40,11 @@ public class Api {
      */
     private Set<String> supportContentType;
 
-    private ApiOptions apiOptions;
+    private ApiOption apiOption;
     private ApiType apiType = ApiType.HTTP;
 
-    public static Api fromJson(JsonObject obj) {
-        Api api = new Api();
-        api.setName(obj.getString("name"));
-        api.setPath(obj.getString("path"));
-        Object arr = obj.getValue("supportMethods");
-        if (arr instanceof JsonArray) {
-            api.setSupportMethods(((JsonArray) arr).stream().map(Object::toString).collect(Collectors.toSet()));
-        }
-        arr = obj.getValue("supportContentType");
-        if (arr instanceof JsonArray) {
-            api.setSupportContentType(((JsonArray) arr).stream().map(Object::toString).collect(Collectors.toSet()));
-        }
-        api.setApiOptions(ApiOptions.fromJson(obj.getJsonObject("apiOptions")));
-        api.setApiType(ApiType.valueOf(obj.getString("apiType", ApiType.HTTP.name())));
-        return api;
-    }
+    private boolean on = false;
+    private String remark;
 
     public String getName() {
         return name;
@@ -69,17 +56,7 @@ public class Api {
     }
 
     public String getPath() {
-        if (StringUtil.isNullOrEmpty(path)) {
-            return "/" + name;
-        } else {
-            if (path.endsWith("/")) {
-                path = path.substring(0, path.length() - 1);
-            }
-            if (path.startsWith("/")) {
-                return path;
-            }
-            return path;
-        }
+        return Help.getPath(path, name);
     }
 
     public Api setPath(String path) {
@@ -88,10 +65,10 @@ public class Api {
     }
 
     public Set<String> getSupportMethods() {
-        if (supportMethods != null) {
-            return supportMethods;
+        if (supportMethods == null) {
+            supportMethods = Sets.newHashSet();
         }
-        return Sets.newHashSet();
+        return supportMethods;
     }
 
     public Api setSupportMethods(Set<String> supportMethods) {
@@ -100,10 +77,10 @@ public class Api {
     }
 
     public Set<String> getSupportContentType() {
-        if (supportContentType != null) {
-            return supportContentType;
+        if (supportContentType == null) {
+            supportContentType = Sets.newHashSet();
         }
-        return Sets.newHashSet();
+        return supportContentType;
     }
 
     public Api setSupportContentType(Set<String> supportContentType) {
@@ -111,12 +88,12 @@ public class Api {
         return this;
     }
 
-    public ApiOptions getApiOptions() {
-        return apiOptions;
+    public ApiOption getApiOption() {
+        return apiOption;
     }
 
-    public Api setApiOptions(ApiOptions apiOptions) {
-        this.apiOptions = apiOptions;
+    public Api setApiOption(ApiOption apiOption) {
+        this.apiOption = apiOption;
         return this;
     }
 
@@ -139,4 +116,37 @@ public class Api {
     public boolean equals(Object obj) {
         return Objects.equals(name, ((Api)obj).name);
     }
+
+    public boolean isOn() {
+        return on;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public Api setRemark(String remark) {
+        this.remark = remark;
+        return this;
+    }
+
+    public Api setOn(boolean on) {
+        this.on = on;
+        return this;
+    }
+
+    public Api() {
+    }
+
+    public Api(JsonObject json) {
+        ApiConverter.fromJson(json, this);
+    }
+
+    @Override
+    public JsonObject toJson() {
+        JsonObject json = new JsonObject();
+        ApiConverter.toJson(this, json);
+        return json;
+    }
+
 }

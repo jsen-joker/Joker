@@ -31,6 +31,7 @@ public class JokerContext {
     }
 
     public EntryClassLoader getPluginClassLoader() {
-        return new EntryClassLoader(JokerClassLoader.getDefaultLoader());
+//        return new EntryClassLoader(JokerClassLoader.getDefaultLoader());
+        return new EntryClassLoader(Thread.currentThread().getContextClassLoader());
     }
 }

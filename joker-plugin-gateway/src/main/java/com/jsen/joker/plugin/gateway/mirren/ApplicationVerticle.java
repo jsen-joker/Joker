@@ -1,13 +1,16 @@
 package com.jsen.joker.plugin.gateway.mirren;
 
+import com.google.common.collect.Lists;
 import com.hazelcast.util.StringUtil;
 import com.jsen.joker.plugin.gateway.mirren.evebtbus.EventKey;
 import com.jsen.joker.plugin.gateway.mirren.lifecycle.*;
 import com.jsen.joker.plugin.gateway.mirren.model.Api;
-import com.jsen.joker.plugin.gateway.mirren.model.GateWay;
+import com.jsen.joker.plugin.gateway.mirren.model.App;
+import com.jsen.joker.plugin.gateway.mirren.service.impl.AppServiceImpl;
 import com.jsen.test.common.RestVerticle;
 import com.jsen.test.common.utils.response.ResponseBase;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
@@ -19,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -32,7 +37,7 @@ public class ApplicationVerticle extends RestVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationVerticle.class);
 
     private ApiMap apiMap = new ApiMap();
-    private GateWay gateWay;
+    private App app;
 
     /** http客户端 */
     private HttpClient httpClient = null;
@@ -50,18 +55,27 @@ public class ApplicationVerticle extends RestVerticle {
         super.start(startFuture);
         this.httpClient = vertx.createHttpClient();
 
-        gateWay = GateWay.fromJson(config().getJsonObject("app"));
+        app = new App(config().getJsonObject("app"));
 
         router.get("/ok").handler(r -> resultJSON(r, ResponseBase.create().code(0)));
 
-        vertx.eventBus().consumer(gateWay.getName() + ":" + EventKey.App.Api.ADD, this::addApi);
-        vertx.eventBus().consumer(gateWay.getName() + ":" + EventKey.App.Api.DEL, this::delApi);
+        vertx.eventBus().consumer(app.getName() + ":" + EventKey.App.Api.ADD, this::deployApi);
+        vertx.eventBus().consumer(app.getName() + ":" + EventKey.App.Api.DEL, this::undeployApi);
 
-        config().put("app.name", gateWay.getName());
-        config().put("http.host", gateWay.getHost());
-        config().put("http.port", gateWay.getPort());
+        config().put("app.name", app.getName());
+        config().put("http.host", app.getHost());
+        config().put("http.port", app.getPort());
+
+        autoDeployAllApi(r -> {
+            if (r.succeeded()) {
+                startServer(startFuture);
+                DeployVerticle.getInstance().registerApp(this);
+            } else {
+                startFuture.fail(r.cause());
+            }
+        });
+
         startServer(startFuture);
-        DeployVerticle.getInstance().registerApp(this);
     }
 
     private boolean started = false;
@@ -86,10 +100,10 @@ public class ApplicationVerticle extends RestVerticle {
     /**
      * eventbus
      */
-    private void addApi(Message<JsonObject> msg) {
-        Api api = Api.fromJson(msg.body());
+    private void deployApi(Message<JsonObject> msg) {
+        Api api = new Api(msg.body());
 
-        addHttpApi(api, res -> {
+        deployHttpApi(api, res -> {
             if (res.succeeded()) {
                 msg.reply(0);
             } else {
@@ -97,43 +111,90 @@ public class ApplicationVerticle extends RestVerticle {
             }
         });
     }
-    private void addHttpApi(Api api, Handler<AsyncResult<Void>> result) {
-        doAddApi(gateWay, api, router, apiMap, result);
+    private void deployHttpApi(Api api, Handler<AsyncResult<Void>> result) {
+        doDeployApi(app, api, router, apiMap, result);
     }
-    private void doAddApi(GateWay gateWay, Api api, Router router, ApiMap apiMap, Handler<AsyncResult<Void>> result) {
-        vertx.executeBlocking(f -> {
-            List<Route> routeChain = apiMap.createRouteChain(api.getName(), api.getPath());
-            if (routeChain == null) {
-                f.fail("path route : " + api.getPath() + " is exist in app : " + gateWay.getName());
-                return;
+    private void doDeployApi(App app, Api api, Router router, ApiMap apiMap, Handler<AsyncResult<Void>> result) {
+        api.setOn(true);
+
+        AppServiceImpl.appService.updateApiState(app.getName(), api.getName(), api.isOn(), r -> {
+            if (r.succeeded()) {
+
+                vertx.executeBlocking(f -> {
+                    List<Api> apis = app.getApis().stream().filter(item -> Objects.equals(item.getName(), api.getName())).collect(Collectors.toList());
+                    if (apis.isEmpty()) {
+                        app.getApis().add(api);
+                    } else {
+                        app.setApis(app.getApis().stream().map(item -> {
+                            if (Objects.equals(item.getName(), api.getName())) {
+                                return api;
+                            }
+                            return item;
+                        }).collect(Collectors.toSet()));
+                    }
+                    List<Route> routeChain = apiMap.createRouteChain(api.getName(), api.getPath());
+                    if (routeChain == null) {
+                        f.fail("path route : " + api.getPath() + " is exist in app : " + app.getName());
+                        return;
+                    }
+                    LifeCycle.defaultChain().start(this, api, router, routeChain);
+                    f.complete();
+                }, result);
+
+            } else {
+                result.handle(Future.failedFuture(r.cause()));
             }
-            /*
-            li
-             */
-            LifeCycle.defaultChain().start(this, api, router, routeChain);
-            f.complete();
-        }, result);
+        });
+    }
+    private void autoDeployAllApi(Handler<AsyncResult<CompositeFuture>> result) {
+        List<Future> tasks = Lists.newArrayList();
+        app.getApis().forEach(item -> {
+            Future<Void> future = Future.future();
+            tasks.add(future);
+            deployHttpApi(item, future.completer());
+        });
+        CompositeFuture.all(tasks).setHandler(result);
     }
     /**
      * eventbus
      */
-    private void delApi(Message<String> msg) {
+    private void undeployApi(Message<String> msg) {
         if (StringUtil.isNullOrEmpty(msg.body())) {
             msg.fail(1, "参数:API名字不能为空");
             return;
         }
         String apiName = msg.body();
-        if (apiMap.deleteRouteChain(apiName)) {
-            LOGGER.debug("del api : " + apiName + " succeed");
-            msg.reply(0);
-        } else {
-            LOGGER.debug("no api : " + apiName + " exist in app : " + gateWay.getName());
-            msg.fail(1, "no api : " + apiName + " exist in app : " + gateWay.getName());
-        }
+        app.setApis(app.getApis().stream().filter(item -> !Objects.equals(item.getName(), apiName)).collect(Collectors.toSet()));
+        AppServiceImpl.appService.updateApiState(app.getName(), apiName, false, r -> {
+            if (r.succeeded()) {
+                if (apiMap.deleteRouteChain(apiName)) {
+                    LOGGER.debug("del api : " + apiName + " succeed");
+                    msg.reply(0);
+                } else {
+                    LOGGER.debug("no api : " + apiName + " exist in app : " + app.getName());
+                    msg.reply(1);
+                }
+            } else {
+                msg.fail(1, r.cause().getMessage());
+            }
+        });
     }
 
-    public GateWay getGateWay() {
-        return gateWay;
+    public Future<Void> undeployAllApi() {
+        Future<Void> result = Future.future();
+        AppServiceImpl.appService.updateAllApiState(app.getName(), false, r -> {
+            if (r.succeeded()) {
+                apiMap.destory();
+                result.complete();
+            } else {
+                result.fail(r.cause());
+            }
+        });
+        return result;
+    }
+
+    public App getApp() {
+        return app;
     }
 
     public ApiMap getApiMap() {

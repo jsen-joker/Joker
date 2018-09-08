@@ -54,6 +54,16 @@ public abstract class RestVerticle extends VerticleBase {
         cros(router.route());
     }
 
+    public void startSimple(Future<Void> startFuture) throws Exception {
+        super.start(startFuture);
+//        cH = config().getString("config.host", "localhost");
+//        cP = config().getInteger("config.port", 9000);
+//        router = Router.router(vertx);
+//        router.route().handler(BodyHandler.create().setUploadsDirectory(new File(new File(PathHelp.getJokerRoot(), "cache"), "file").getAbsolutePath()));
+//        router.route().failureHandler(this::notFound);
+//        cros(router.route());
+    }
+
     /**
      * 返回异步的数据
      * @param context
@@ -236,10 +246,14 @@ public abstract class RestVerticle extends VerticleBase {
         allowHeaders.add("authorization");
         allowHeaders.add("x-requested-with");
         allowHeaders.add("Access-Control-Allow-Origin");
+        allowHeaders.add("Access-Control-Allow-Headers");
+        allowHeaders.add("Access-Control-Expose-Headers");
+        allowHeaders.add("Access-Control-Allow-Methods");
         allowHeaders.add("origin");
         allowHeaders.add("Content-Type");
         allowHeaders.add("accept");
         allowHeaders.add("X-PINGARUNER");
+        allowHeaders.add("X-Token");
 
         Set<HttpMethod> allowMethods = new HashSet<>();
         allowMethods.add(HttpMethod.GET);

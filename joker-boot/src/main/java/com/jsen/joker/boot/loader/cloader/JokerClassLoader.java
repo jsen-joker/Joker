@@ -30,10 +30,17 @@ public class JokerClassLoader extends URLClassLoader {
         jokerClassLoader = new JokerClassLoader(urls);
         Thread.currentThread().setContextClassLoader(jokerClassLoader);
 
+
+
         /*
         init joker context
          */
         try {
+
+            Class<?> eCZ = jokerClassLoader.loadClass("com.jsen.joker.boot.cloader.EntryClassLoader");
+            Thread.currentThread().setContextClassLoader((ClassLoader) eCZ.getConstructor(ClassLoader.class).newInstance(jokerClassLoader));
+
+
             Class<?> bootClazz = jokerClassLoader.loadClass("com.jsen.joker.boot.Boot");
             Method method = bootClazz.getMethod("boot");
             @SuppressWarnings("Unchecked")

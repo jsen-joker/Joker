@@ -4,7 +4,7 @@ import com.jsen.joker.plugin.gateway.mirren.ApplicationVerticle;
 import com.jsen.joker.plugin.gateway.mirren.handler.HttpRouteHandler;
 import com.jsen.joker.plugin.gateway.mirren.handler.RedirectRouteHandler;
 import com.jsen.joker.plugin.gateway.mirren.model.Api;
-import com.jsen.joker.plugin.gateway.mirren.model.GateWay;
+import com.jsen.joker.plugin.gateway.mirren.model.App;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpMethod;
@@ -30,14 +30,14 @@ public class HandleApi extends Pipline<ApplicationVerticle, Api, Router, List<Ro
 
     @Override
     protected boolean handle(ApplicationVerticle applicationVerticle, Api api, Router router, List<Route> routeChain) {
-        initServerHandler(applicationVerticle.getHttpClient(), applicationVerticle.getGateWay(), api, applicationVerticle.getApiMap().genRoute(routeChain, router));
+        initServerHandler(applicationVerticle.getHttpClient(), applicationVerticle.getApp(), api, applicationVerticle.getApiMap().genRoute(routeChain, router));
         return true;
     }
 
 
-    private void initServerHandler(HttpClient httpClient, GateWay gateWay, Api api, Route route) {
-        LOGGER.debug("api path : " + gateWay.getPath() + api.getPath());
-        route.path(gateWay.getPath() + api.getPath());
+    private void initServerHandler(HttpClient httpClient, App app, Api api, Route route) {
+        LOGGER.debug(api.getPath());
+        route.path(api.getPath());
         /*
          * 设置支持的方法，空表示支持所有
          */
@@ -49,7 +49,7 @@ public class HandleApi extends Pipline<ApplicationVerticle, Api, Router, List<Ro
 
 
         if (api.getApiType() == Api.ApiType.HTTP) {
-            Handler<RoutingContext> handler = HttpRouteHandler.create(gateWay.getPath(), api, httpClient);
+            Handler<RoutingContext> handler = HttpRouteHandler.create(api, httpClient);
             route.handler(handler);
             LOGGER.debug("add http api : " + api.getName() + " succeed");
         } else if (api.getApiType() == Api.ApiType.REDIRECT) {
@@ -57,7 +57,7 @@ public class HandleApi extends Pipline<ApplicationVerticle, Api, Router, List<Ro
             route.handler(handler);
             LOGGER.debug("add redirect api : " + api.getName() + " succeed");
         } else {
-            Handler<RoutingContext> handler = HttpRouteHandler.create(gateWay.getPath(), api, httpClient);
+            Handler<RoutingContext> handler = HttpRouteHandler.create(api, httpClient);
             route.handler(handler);
             LOGGER.debug("add http api : " + api.getName() + " succeed");
         }
