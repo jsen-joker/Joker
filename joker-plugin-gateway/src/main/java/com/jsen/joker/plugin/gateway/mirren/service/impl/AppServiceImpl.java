@@ -188,8 +188,13 @@ public class AppServiceImpl extends JdbcRepositoryWrapper implements AppService 
             if (r.succeeded() && r.result().isPresent()) {
                 String metas = r.result().get().getString("metas");
                 JsonObject mt = new JsonObject(metas);
-                mt.put("remark", app.getRemark());
-
+                JsonObject nMt = app.toJson();
+                nMt.remove("apis");
+                nMt.remove("on");
+                nMt.remove("createTime");
+                nMt.remove("updateTime");
+                mt.mergeIn(nMt);
+//                mt.put("remark", app.getRemark());
                 app.setUpdateTime(Instant.now().toEpochMilli());
                 this.update(new JsonArray().add(app.getName()).add(app.getHost()).add(app.getPort()).add(app.getUpdateTime()).add(mt.toString()).add(id), UPDATE_APIS, r2 -> {
                     if (r2.succeeded()) {

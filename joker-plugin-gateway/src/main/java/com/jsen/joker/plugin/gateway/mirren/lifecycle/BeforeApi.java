@@ -1,6 +1,5 @@
 package com.jsen.joker.plugin.gateway.mirren.lifecycle;
 
-import com.google.common.collect.Lists;
 import com.jsen.joker.plugin.gateway.mirren.ApplicationVerticle;
 import com.jsen.joker.plugin.gateway.mirren.model.Api;
 import io.vertx.ext.web.Route;

@@ -1,0 +1,7 @@
+/*C6*/SET SCHEMA PUBLIC
+CREATE TABLE IF NOT EXISTS joker_plugin_config (uuid varchar(128),comment varchar(128),endpoint varchar(128),data LONGVARCHAR,update_time datetime,create_time datetime)
+/*C7*/SET SCHEMA PUBLIC
+DISCONNECT
+/*C5*/SET SCHEMA PUBLIC
+DISCONNECT
+/*C6*/DISCONNECT

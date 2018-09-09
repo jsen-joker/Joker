@@ -1,6 +1,7 @@
 package com.jsen.joker.plugin.gateway.mirren.lifecycle;
 
 import com.jsen.joker.plugin.gateway.mirren.ApplicationVerticle;
+import com.jsen.joker.plugin.gateway.mirren.lifecycle.hock.AppExceptionHandler;
 import com.jsen.joker.plugin.gateway.mirren.model.Api;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
@@ -23,6 +24,8 @@ public class LifeCycle {
     private static Pipline<ApplicationVerticle, Api, Router, List<Route>> _defaultChain = beforeApi;
     static {
         _defaultChain.setChild(handleApi).setChild(afterApi);
+
+        addAfterHockBefore(new AppExceptionHandler());
     }
     public static Pipline<ApplicationVerticle, Api, Router, List<Route>> defaultChain() {
         return _defaultChain;

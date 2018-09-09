@@ -18,26 +18,39 @@ import java.util.List;
 public abstract class Pipline<CONTEXT, REGEX, TARGET, CYCLE> {
 
 
-    private List<Hock<? extends CONTEXT, ? extends REGEX, ? extends TARGET, ? extends CYCLE>> beforeHocks = Lists.newArrayList();
-    private List<Hock<? extends CONTEXT, ? extends REGEX, ? extends TARGET, ? extends CYCLE>> afterHocks = Lists.newArrayList();
+    private List<Hock<CONTEXT, REGEX, TARGET, CYCLE>> beforeHocks = Lists.newArrayList();
+    private List<Hock<CONTEXT, REGEX, TARGET, CYCLE>> afterHocks = Lists.newArrayList();
 
-    public void registerBeforeHock(Hock<? extends CONTEXT, ? extends REGEX, ? extends TARGET, ? extends CYCLE> hock) {
+    public void registerBeforeHock(Hock<CONTEXT, REGEX, TARGET, CYCLE> hock) {
         beforeHocks.add(hock);
     }
-    public void registerAfterHock(Hock<? extends CONTEXT, ? extends REGEX, ? extends TARGET, ? extends CYCLE> hock) {
+    public void registerAfterHock(Hock<CONTEXT, REGEX, TARGET, CYCLE> hock) {
         afterHocks.add(hock);
     }
 
-    private Pipline child;
+    private Pipline<CONTEXT, REGEX, TARGET, CYCLE> child;
 
-    public Pipline setChild(Pipline pipline) {
+    public Pipline<CONTEXT, REGEX, TARGET, CYCLE> setChild(Pipline<CONTEXT, REGEX, TARGET, CYCLE> pipline) {
         this.child = pipline;
         return pipline;
     }
 
     public void start(CONTEXT context, REGEX regex, TARGET target, CYCLE cycle) {
-        if (handle(context, regex, target, cycle) && child != null) {
-            child.start(context, regex, target, cycle);
+        for (Hock<CONTEXT, REGEX, TARGET, CYCLE> before : beforeHocks) {
+            if (!before.handle(context, regex, target, cycle)) {
+                return;
+            }
+        }
+
+        if (handle(context, regex, target, cycle)) {
+            for (Hock<CONTEXT, REGEX, TARGET, CYCLE> before : afterHocks) {
+                if (!before.handle(context, regex, target, cycle)) {
+                    return;
+                }
+            }
+            if (child != null) {
+                child.start(context, regex, target, cycle);
+            }
         }
     }
 

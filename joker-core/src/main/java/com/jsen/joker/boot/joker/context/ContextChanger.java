@@ -6,6 +6,8 @@ import com.jsen.joker.boot.utils.FileSystemDetector;
 import com.jsen.joker.boot.utils.JarResourceUncompress;
 import com.jsen.joker.boot.utils.Regex;
 import com.jsen.joker.boot.utils.xml.GenMaven;
+import io.vertx.core.Vertx;
+import io.vertx.core.file.FileSystem;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
@@ -59,8 +61,18 @@ public class ContextChanger implements FileSystemDetector.OnFileChangeListener {
                     fileName = fileName.substring(0, fileName.lastIndexOf("."));
                 }
                 File file = new File(new File(root, "static"), fileName);
+                logger.debug(file.getAbsolutePath());
                 if (file.exists()) {
-                    file.delete();
+                    FileSystem fileSystem = Vertx.vertx().fileSystem();
+                    fileSystem.deleteRecursive(file.getAbsolutePath(), true, r -> {
+                        if (r.succeeded()) {
+                            logger.debug("SUCCEED delete static resource");
+                        } else {
+                            logger.error("FAILED delete static resource");
+                        }
+                    });
+                } else {
+                    logger.debug(file.getAbsolutePath());
                 }
             });
             // 解压静态文件
@@ -72,6 +84,16 @@ public class ContextChanger implements FileSystemDetector.OnFileChangeListener {
                 RootVerticle.getDefaultRootVerticle().loadEntries(add.stream().map(Entry::new).collect(Collectors.toList())).setHandler(ar -> lock.unlock());
             });
         }
+    }
+
+    public static boolean forceDelete(File f) {
+        boolean result = false;
+        int tryCount = 0;
+        while(!result && tryCount++ < 10) {
+            System.gc();
+            result = f.delete();
+        }
+        return result;
     }
 
     private void extractJarResource(List<FileSystemDetector.FileEntry> add) {

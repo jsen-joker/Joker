@@ -12,8 +12,6 @@ SET DATABASE SQL SIZE TRUE
 SET DATABASE SQL TYPES FALSE
 SET DATABASE SQL TDC DELETE TRUE
 SET DATABASE SQL TDC UPDATE TRUE
-SET DATABASE SQL TRANSLATE TTI TYPES TRUE
-SET DATABASE SQL TRANSLATE TTI TYPES TRUE
 SET DATABASE SQL CONCAT NULLS TRUE
 SET DATABASE SQL UNIQUE NULLS TRUE
 SET DATABASE SQL CONVERT TRUNCATE TRUE
@@ -47,12 +45,7 @@ GRANT DBA TO ""
 SET SCHEMA SYSTEM_LOBS
 INSERT INTO BLOCKS VALUES(0,2147483647,0)
 SET SCHEMA PUBLIC
-INSERT INTO JOKER_PLUGIN_CONFIG VALUES('a85fde4a-3fe4-4f96-8bac-fcb2d653ae67','\u6d4b\u8bd5\u670d\u52a11','service1','{    "http.port" : 9010,    "app.name" : "service001"  }','2018-05-27 22:36:54.000000','2018-05-27 22:36:54.000000')
-INSERT INTO JOKER_PLUGIN_CONFIG VALUES('ea4f5e8d-d5d1-4561-8276-6f11ac73a924','\u6d4b\u8bd5\u670d\u52a12','service2','{    "http.port" : 9011,    "app.name" : "service002"  }','2018-05-27 22:37:21.000000','2018-05-27 22:37:21.000000')
 INSERT INTO JOKER_PLUGIN_CONFIG VALUES('30859162-7276-4843-9baa-b51a62398113','\u7528\u6237\u6a21\u5757','user','{    "http.port" : 9012,    "app.name" : "user"  }','2018-05-27 22:37:46.000000','2018-05-27 22:37:46.000000')
-INSERT INTO JOKER_PLUGIN_CONFIG VALUES('30d948cf-0632-4fbb-ba54-4d1d2f3bd62b','\u4efb\u52a1\u6a21\u5757','job','{    "http.port" : 9013,    "app.name" : "job001"  }','2018-05-27 22:38:13.000000','2018-05-27 22:38:13.000000')
-INSERT INTO JOKER_PLUGIN_CONFIG VALUES('86eb9391-3797-4406-9a06-1a1e36f3be3a','\u7f51\u5173\u6a21\u5757','s_gateway','{    "http.port" : 8088  }','2018-05-27 22:38:45.000000','2018-05-27 22:38:45.000000')
-INSERT INTO JOKER_PLUGIN_CONFIG VALUES('f6a4f375-cc72-45b2-b619-ff39d2aff1e1','job master\u914d\u7f6e\u6587\u4ef6','job_master','{  "redis.host":"127.0.0.1",  "redis.port":6379,  "http.port":9096      }','2018-05-28 17:47:29.000000','2018-05-28 17:47:29.000000')
 INSERT INTO JOKER_PLUGIN_CONFIG VALUES('774ddf73-d40c-4c5f-b49a-9ea366d688f5','\u6807\u51c6\u672c\u5730redis\u914d\u7f6e','redis','{  "redis.host": "127.0.0.1",  "redis.port": 6379}','2018-05-31 10:04:12.000000','2018-05-31 09:02:53.000000')
 INSERT INTO JOKER_PLUGIN_CONFIG VALUES('e4cb00a8-8749-4f00-9dc1-a3a1fddac533','mysql\u6570\u636e\u5e93\u914d\u7f6e1','mysql1','{\u000a  "url": "jdbc:mysql://localhost:3306/jtest001?characterEncoding=UTF-8&useSSL=false",\u000a  "driver_class": "com.mysql.cj.jdbc.Driver",\u000a  "user": "root",\u000a  "password": "",\u000a  "max_pool_size": 30\u000a}','2018-05-31 10:30:51.000000','2018-05-27 22:39:45.000000')
-INSERT INTO JOKER_PLUGIN_CONFIG VALUES('77496408-0a2c-4608-9b3f-0eb5c25b2d20','login','login','{\u000a  "http.port": 9012,\u000a  "app.name": "user",\u000a  "url": "jdbc:mysql://106.75.50.143:3306/vertx_admin?useUnicode=true&characterEncoding=UTF-8",\u000a  "driver_class": "com.mysql.cj.jdbc.Driver",\u000a  "user": "root",\u000a  "password": "jinglingguoguo",\u000a  "max_pool_size": 30\u000a}','2018-08-20 12:04:31.000000','2018-05-31 10:30:28.000000')
+INSERT INTO JOKER_PLUGIN_CONFIG VALUES('86eb9391-3797-4406-9a06-1a1e36f3be3a','\u7f51\u5173\u6a21\u5757','s_gateway','{\u000a  "http.port": 8088,\u000a  "app.name": "JokerGateway",\u000a  "endpoint": "jokerGateway",\u000a  "url": "jdbc:mysql://localhost:3306/joker?characterEncoding=UTF-8&useSSL=false",\u000a  "driver_class": "com.mysql.cj.jdbc.Driver",\u000a  "user": "root",\u000a  "password": "",\u000a  "max_pool_size": 30\u000a}','2018-09-09 13:57:33.000000','2018-05-27 22:38:45.000000')

@@ -15,9 +15,11 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +59,7 @@ public class ApplicationVerticle extends RestVerticle {
 
         app = new App(config().getJsonObject("app"));
 
+        router.route().handler(this::filterBlackIP);
         router.get("/ok").handler(r -> resultJSON(r, ResponseBase.create().code(0)));
 
         vertx.eventBus().consumer(app.getName() + ":" + EventKey.App.Api.ADD, this::deployApi);
@@ -191,6 +194,28 @@ public class ApplicationVerticle extends RestVerticle {
             }
         });
         return result;
+    }
+
+    public void filterBlackIP(RoutingContext rct) {
+        // 添加请求到达VX-API的数量
+        vertx.eventBus().send(EventKey.System.SYSTEM_API_REQUEST, null);
+//        String host = rct.request().remoteAddress().host();
+//        if (blackIpSet.contains(host)) {
+//            HttpServerResponse response = rct.response();
+//            if (appOption.getBlacklistIpContentType() != null) {
+//                response.putHeader(CONTENT_TYPE, appOption.getBlacklistIpContentType());
+//            }
+//            response.setStatusCode(appOption.getBlacklistIpCode());
+//            if (appOption.getBlacklistIpResult() != null) {
+//                response.setStatusMessage(appOption.getBlacklistIpResult());
+//            } else {
+//                response.setStatusMessage("you can't access this service");
+//            }
+//            response.end();
+//        } else {
+//            rct.next();
+//        }
+        rct.next();
     }
 
     public App getApp() {

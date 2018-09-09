@@ -11,7 +11,9 @@ import io.vertx.core.http.HttpVersion;
 import io.vertx.core.http.impl.MimeMapping;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.Http2PushMapping;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.FaviconHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.ext.web.impl.LRUCache;
 import io.vertx.ext.web.impl.Utils;
@@ -75,16 +77,16 @@ public class JokerStaticHandlerImpl implements StaticHandler {
     public JokerStaticHandlerImpl(Class clazz, ClassLoader classLoader) {
         this.classLoader = classLoader;
         setAllowRootFileSystemAccess(true);
-        setRoot(this.getJokerRoot(clazz));
+        setRoot(getJokerRoot(clazz));
     }
 
     public JokerStaticHandlerImpl(Class clazz) {
         classLoader = null;
         setAllowRootFileSystemAccess(true);
-        setRoot(this.getJokerRoot(clazz));
+        setRoot(getJokerRoot(clazz));
     }
 
-    public String getJokerRoot(Class clazz) {
+    public static String getJokerRoot(Class clazz) {
         String root = PathHelp.getJokerRoot();
 
         URL url = clazz.getProtectionDomain().getCodeSource()

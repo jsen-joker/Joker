@@ -4,6 +4,7 @@ import com.jsen.joker.annotation.annotation.Entry;
 import com.jsen.joker.boot.cloader.context.EntryContext;
 import com.jsen.joker.plugin.gateway.mirren.DeployVerticle;
 import com.jsen.joker.plugin.gateway.mirren.handler.GatewayHandler;
+import com.jsen.joker.plugin.gateway.mirren.handler.SystemHandler;
 import com.jsen.joker.plugin.gateway.mirren.service.AppService;
 import com.jsen.test.common.RestVerticle;
 import com.jsen.test.common.config.ConfigRetrieverHelper;
@@ -19,6 +20,8 @@ import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.CookieHandler;
+import io.vertx.ext.web.handler.FaviconHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.reactivex.core.RxHelper;
 import io.vertx.reactivex.core.Vertx;
@@ -28,12 +31,16 @@ import io.vertx.servicediscovery.types.HttpEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * <p>
+ *     实现内部网关核心，
+ *     实现静态网页访问、及http核心访问api
+ *     实现系统参数访问api
  * </p>
  *
  * @author ${User}
@@ -56,6 +63,7 @@ public class BootGateWay extends RestVerticle {
     private static final String PB_PREFIX = "pb";
     private static final String LOGIN_PREFIX = "login";
     private static final String GATEWAY_PREFIX = "gateway";
+    private static final String SYSTEM_PREFIX = "system";
     private static final String SP = "/";
     private UserService userService;
 
@@ -78,7 +86,7 @@ public class BootGateWay extends RestVerticle {
                 .withHttpStore(config().getString("config.host", "localhost"), config().getInteger("config.port", 9000), "/config/s_gateway")
                 .rxCreateConfig(io.vertx.reactivex.core.Vertx.newInstance(vertx)).doOnError(startFuture::fail).subscribe(config -> {
 
-                    logger.debug(config.toString());
+
             JsonObject cbOptions = config().getJsonObject("circuit-breaker") != null ?
                     config().getJsonObject("circuit-breaker") : new JsonObject();
             circuitBreaker = CircuitBreaker.create(cbOptions.getString("name", "circuit-breaker"), vertx,
@@ -93,14 +101,25 @@ public class BootGateWay extends RestVerticle {
 
 
             logger.debug(Thread.currentThread().getContextClassLoader().getClass().toString());
+
+
+
+            String favicon = new File(JokerStaticHandlerImpl.getJokerRoot(this.getClass()), "favicon.ico").getAbsolutePath();
+            logger.debug(favicon);
+            router.route().handler(FaviconHandler.create(favicon));
+//            router.route().handler(BodyHandler.create().setUploadsDirectory(getUploadsDirectory()));
+            router.route().handler(CookieHandler.create());
+
+
             // api dispatcher
             router.route("/" + LOGIN_PREFIX + "/*").handler(this::dispatchLogin);
             router.route("/" + SEC_PREFIX + "/*").handler(this::dispatchApi);
             router.route("/" + PB_PREFIX + "/*").handler(this::dispatchPb);
 
             new GatewayHandler(SP + GATEWAY_PREFIX + SP, router, vertx.eventBus(), appService);
-            logger.debug("2");
+            new SystemHandler(SP + SYSTEM_PREFIX + SP, router, vertx.eventBus(), appService);
 
+            logger.debug("2");
             StaticHandler staticHandler = new JokerStaticHandlerImpl(this.getClass());
             router.route("/*").handler(staticHandler);
 

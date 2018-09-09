@@ -2,6 +2,7 @@ package com.jsen.joker.plugin.gateway.mirren.handler;
 
 import com.jsen.joker.plugin.gateway.GateWayStaticInfo;
 import com.jsen.joker.plugin.gateway.HttpConstants;
+import com.jsen.joker.plugin.gateway.mirren.evebtbus.EventKey;
 import com.jsen.joker.plugin.gateway.mirren.model.Api;
 import com.jsen.joker.plugin.gateway.mirren.model.ApiOptionUrl;
 import com.jsen.joker.plugin.gateway.mirren.utils.Balancer;
@@ -61,6 +62,9 @@ public class HttpRouteHandler implements Handler<RoutingContext> {
      */
     @Override
     public void handle(RoutingContext event) {
+        event.vertx().eventBus().send(EventKey.System.SYSTEM_HTTP_REQUEST_SR, null);
+
+
         HttpServerRequest sourceRequest = event.request();
 
         String suffix = sourceRequest.path();
@@ -76,6 +80,7 @@ public class HttpRouteHandler implements Handler<RoutingContext> {
         _dumpHeader(sourceRequest, clientRequest);
         _handleHCException(event, clientRequest);
         _handleHCResponse(event, clientRequest);
+        _handleEnd(event);
 
 
         // send request
@@ -102,6 +107,12 @@ public class HttpRouteHandler implements Handler<RoutingContext> {
             // send response
             toRsp.end(body);
         }));
+    }
+    private void _handleEnd(RoutingContext event) {
+        event.response().endHandler(end -> {
+            // 减少当前正在处理的数量
+            event.vertx().eventBus().send(EventKey.System.SYSTEM_HTTP_REQUEST_SS, null);
+        });
     }
 
 
